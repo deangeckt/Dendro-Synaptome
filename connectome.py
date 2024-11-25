@@ -8,7 +8,7 @@ from neuron import Neuron
 from synapse import Synapse
 from connectome_types import ClfType, SynapseDirection, m_types
 
-CONNECTOME_BASE_PATH = 'data/connectome_base_100.pkl'
+CONNECTOME_BASE_PATH = 'data/connectome_base.pkl'
 
 
 def syn_table_to_synapses(df: pd.DataFrame) -> list[Synapse]:

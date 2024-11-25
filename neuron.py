@@ -1,13 +1,7 @@
-from enum import Enum
-
 import numpy as np
 
 from synapse import Synapse
-
-
-class ClfType(str, Enum):
-    excitatory = 'E'
-    inhibitory = 'I'
+from connectome_types import ClfType
 
 
 class Neuron:
@@ -22,7 +16,7 @@ class Neuron:
                  post_synapses: list[Synapse]):
 
         self.root_id = root_id
-        self.clf_type = clf_type,
+        self.clf_type = clf_type
         self.cell_type = cell_type
         self.mtype = mtype
         self.position = position

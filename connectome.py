@@ -4,10 +4,11 @@ import pandas as pd
 from caveclient import CAVEclient
 from tqdm import tqdm
 
-from neuron import Neuron, ClfType
+from neuron import Neuron
 from synapse import Synapse
+from connectome_types import ClfType, SynapseDirection, m_types
 
-CONNECTOME_BASE_PATH = 'data/connectome_base.pkl'
+CONNECTOME_BASE_PATH = 'data/connectome_base_100.pkl'
 
 
 def syn_table_to_synapses(df: pd.DataFrame) -> list[Synapse]:
@@ -59,7 +60,34 @@ def load_local_dataset() -> dict:
         return pickle.load(f)
 
 
-read_dataset()
+def calculate_cell_type_conn_matrix(cell_type: str,
+                                    type_space: list[str],
+                                    direction: SynapseDirection) -> np.ndarray:
+    """
+    :param cell_type: str: (mtype, cell_type, clf_type) which are attributes of neuron class
+    :param type_space: list[str]: all possible types of cell_type
+    :param direction: SynapseDirection (input, output)
+    :return: connectivity matrix
+    """
 
-# conn = load_local_dataset()
-# print(conn.keys())
+    connectome = load_local_dataset()
+    matrix = np.zeros((len(type_space), len(type_space)), dtype=int)
+    type_index = {t: i for i, t in enumerate(type_space)}
+
+    for neuron in connectome.values():
+        src_type = getattr(neuron, cell_type)
+        synapses: list[Synapse] = neuron.post_synapses if direction == SynapseDirection.output else neuron.pre_synapses
+        for syn in synapses:
+            target_neuron_id = syn.post_pt_root_id if direction == SynapseDirection.output else syn.pre_pt_root_id
+            if target_neuron_id not in connectome:
+                continue
+            connected_neuron: Neuron = connectome[target_neuron_id]
+            target_type = getattr(connected_neuron, cell_type)
+            matrix[type_index[src_type], type_index[target_type]] += 1
+
+    return matrix
+
+
+if __name__ == "__main__":
+    read_dataset()
+    # calculate_cell_type_conn_matrix('clf_type', ['E', 'I'], SynapseDirection.input)

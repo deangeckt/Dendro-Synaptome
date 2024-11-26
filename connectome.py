@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 from neuron import Neuron
 from synapse import Synapse
-from connectome_types import ClfType, SynapseDirection, m_types
+from connectome_types import ClfType, SynapseDirection
 
 CONNECTOME_BASE_PATH = 'data/connectome_base.pkl'
 
@@ -22,7 +22,8 @@ def syn_table_to_synapses(df: pd.DataFrame) -> list[Synapse]:
             ]
 
 
-def read_dataset():
+def download_dataset():
+    # TODO: batch
     client = CAVEclient('minnie65_public')
     cell_types = pd.read_csv('data/aibs_metamodel_celltypes_v661.csv')
     m_types = pd.read_csv('data/aibs_metamodel_mtypes_v661_v2.csv')
@@ -69,7 +70,6 @@ def calculate_cell_type_conn_matrix(cell_type: str,
     :param direction: SynapseDirection (input, output)
     :return: connectivity matrix
     """
-
     connectome = load_local_dataset()
     matrix = np.zeros((len(type_space), len(type_space)), dtype=int)
     type_index = {t: i for i, t in enumerate(type_space)}
@@ -83,11 +83,16 @@ def calculate_cell_type_conn_matrix(cell_type: str,
                 continue
             connected_neuron: Neuron = connectome[target_neuron_id]
             target_type = getattr(connected_neuron, cell_type)
-            matrix[type_index[src_type], type_index[target_type]] += 1
+
+            # keep it pre-synaptic X post-synaptic
+            if direction == SynapseDirection.output:
+                matrix[type_index[src_type], type_index[target_type]] += 1
+            else:
+                matrix[type_index[target_type], type_index[src_type]] += 1
 
     return matrix
 
 
 if __name__ == "__main__":
-    read_dataset()
+    download_dataset()
     # calculate_cell_type_conn_matrix('clf_type', ['E', 'I'], SynapseDirection.input)

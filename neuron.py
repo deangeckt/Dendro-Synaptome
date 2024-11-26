@@ -25,8 +25,11 @@ class Neuron:
         self.post_synapses = post_synapses
 
     def __repr__(self):
-        return (f"Neuron(root_id={self.root_id}, cell_type='{self.cell_type}',"
-                f"mtype={self.mtype}, position={self.position},"
+        return (f"Neuron(root_id={self.root_id},"
+                f"clf_type={self.clf_type.value},"
+                f"cell_type={self.cell_type},"
+                f"mtype={self.mtype},"
+                f"position={self.position},"
                 f"volume={self.volume},"
                 f"#pre_synapses={len(self.pre_synapses)},"
                 f"#post_synapses={len(self.post_synapses)})")

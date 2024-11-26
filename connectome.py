@@ -10,6 +10,7 @@ from neuron import Neuron
 from synapse import Synapse
 from connectome_types import ClfType, SynapseDirection
 
+DATA_BASE_PATH = 'data/'
 CONNECTOME_BASE_PATH = 'data/connectome_base.pkl'
 SKELETONS_DIR_PATH = 'data/skeletons'
 
@@ -26,33 +27,56 @@ def syn_table_to_synapses(df: pd.DataFrame) -> list[Synapse]:
 
 
 def download_dataset():
-    # TODO: batch
+    os.makedirs(DATA_BASE_PATH, exist_ok=True)
+
     client = CAVEclient('minnie65_public')
     cell_types = pd.read_csv('data/aibs_metamodel_celltypes_v661.csv')
     m_types = pd.read_csv('data/aibs_metamodel_mtypes_v661_v2.csv')
     cell_types.set_index('root_id', inplace=True)
     m_types.set_index('root_id', inplace=True)
 
+    batch_size = 10
     connectome = {}
-    for cell_id in tqdm(m_types.index):
-        if cell_id == 0:
+
+    for start in tqdm(range(0, len(m_types), batch_size)):
+        end = min(start + batch_size, len(m_types))
+        batch_ids = m_types.index[start:end]
+
+        batch_ids = batch_ids[batch_ids != 0]
+        if len(batch_ids) == 0:
             continue
+
         try:
-            clf_type = ClfType.excitatory if (cell_types.at[cell_id, 'classification_system']
-                                              == 'excitatory_neuron') else ClfType.inhibitory
-            neuron = Neuron(root_id=cell_id,
-                            clf_type=clf_type,
-                            cell_type=cell_types.at[cell_id, 'cell_type'],
-                            mtype=m_types.at[cell_id, 'cell_type'],
-                            position=cell_types.loc[
-                                cell_id, ['pt_position_x', 'pt_position_y', 'pt_position_z']].to_numpy(),
-                            volume=cell_types.at[cell_id, 'volume'],
-                            pre_synapses=syn_table_to_synapses(client.materialize.synapse_query(post_ids=cell_id)),
-                            post_synapses=syn_table_to_synapses(client.materialize.synapse_query(pre_ids=cell_id)),
-                            )
-            connectome[cell_id] = neuron
+            classification_systems = cell_types.loc[batch_ids, 'classification_system'].values
+            clf_types = [ClfType.excitatory if s == 'excitatory_neuron' else ClfType.inhibitory for s in
+                         classification_systems]
+
+            mtype_values = m_types.loc[batch_ids, 'cell_type']
+            cell_type_values = cell_types.loc[batch_ids, 'cell_type']
+            positions = cell_types.loc[batch_ids, ['pt_position_x', 'pt_position_y', 'pt_position_z']].to_numpy()
+            volumes = cell_types.loc[batch_ids, 'volume']
+
+            # Batch fashion
+            pre_synapses = syn_table_to_synapses(client.materialize.synapse_query(post_ids=list(batch_ids.values)))
+            post_synapses = syn_table_to_synapses(client.materialize.synapse_query(pre_ids=list(batch_ids.values)))
+
+            for i, cell_id in enumerate(batch_ids):
+                cell_post_synapses = [syn for syn in post_synapses if syn.pre_pt_root_id == cell_id]
+                cell_pre_synapses = [syn for syn in pre_synapses if syn.post_pt_root_id == cell_id]
+
+                neuron = Neuron(root_id=cell_id,
+                                clf_type=clf_types[i],
+                                cell_type=cell_type_values.iloc[i],
+                                mtype=mtype_values.iloc[i],
+                                position=positions[i],
+                                volume=volumes.iloc[i],
+                                pre_synapses=cell_pre_synapses,
+                                post_synapses=cell_post_synapses)
+
+                connectome[cell_id] = neuron
+
         except Exception as e:
-            print(f'err in {cell_id}')
+            print(f'Error in chunk {start}. cell_ids {batch_ids}')
             print(e)
 
     with open(CONNECTOME_BASE_PATH, 'wb') as f:
@@ -115,7 +139,7 @@ def calculate_cell_type_conn_matrix(cell_type: str,
     return matrix
 
 
-def aggregate_():
+def calculate_():
     pass
 
 

@@ -1,14 +1,17 @@
+import os
 import pickle
 import numpy as np
 import pandas as pd
 from caveclient import CAVEclient
 from tqdm import tqdm
+import json
 
 from neuron import Neuron
 from synapse import Synapse
 from connectome_types import ClfType, SynapseDirection
 
 CONNECTOME_BASE_PATH = 'data/connectome_base.pkl'
+SKELETONS_DIR_PATH = 'data/skeletons'
 
 
 def syn_table_to_synapses(df: pd.DataFrame) -> list[Synapse]:
@@ -56,6 +59,25 @@ def download_dataset():
         pickle.dump(connectome, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
+def download_neuron_skeletons():
+    client = CAVEclient('minnie65_public')
+    m_types = pd.read_csv('data/aibs_metamodel_mtypes_v661_v2.csv')
+    m_types.set_index('root_id', inplace=True)
+    os.makedirs(SKELETONS_DIR_PATH, exist_ok=True)
+
+    for cell_id in tqdm(m_types.index):
+        if cell_id == 0:
+            continue
+        try:
+            sk_dict = client.skeleton.get_skeleton(cell_id, output_format='json')
+
+            with open(f'{SKELETONS_DIR_PATH}/{cell_id}.json', 'w') as f:
+                json.dump(sk_dict, f)
+        except Exception as e:
+            print(f'err in {cell_id}')
+            print(e)
+
+
 def load_local_dataset() -> dict:
     with open(CONNECTOME_BASE_PATH, 'rb') as f:
         return pickle.load(f)
@@ -93,6 +115,11 @@ def calculate_cell_type_conn_matrix(cell_type: str,
     return matrix
 
 
+def aggregate_():
+    pass
+
+
 if __name__ == "__main__":
+    # download_neuron_skeletons()
     download_dataset()
     # calculate_cell_type_conn_matrix('clf_type', ['E', 'I'], SynapseDirection.input)

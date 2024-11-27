@@ -1,233 +1,105 @@
-import os
 import pickle
-from typing import Optional
-
-import meshparty.skeleton_io
-from meshparty import skeleton
 import numpy as np
-import pandas as pd
-from caveclient import CAVEclient
-from meshparty.skeleton import Skeleton
-from tqdm import tqdm
-import json
-
-from neuron import Neuron
 from synapse import Synapse
-from connectome_types import ClfType, SynapseDirection, cell_types
-
-DATA_BASE_PATH = 'data/'
-CONNECTOME_BASE_PATH = 'data/connectome_base_100.pkl'
-SKELETONS_DIR_PATH = 'data/skeletons'
+from connectome_types import SynapseDirection, cell_types, CONNECTOME_BASE_PATH
 
 
-def syn_table_to_synapses(df: pd.DataFrame) -> list[Synapse]:
-    ids = df['id'].to_numpy()
-    pre_ids = df['pre_pt_root_id'].to_numpy()
-    post_ids = df['post_pt_root_id'].to_numpy()
-    sizes = df['size'].to_numpy()
-    center_positions = df['ctr_pt_position'].apply(np.array).tolist()
-    return [Synapse(id_=ids[i], pre_pt_root_id=pre_ids[i], post_pt_root_id=post_ids[i], size=sizes[i],
-                    center_position=center_positions[i]) for i in range(len(df))
-            ]
+class Connectome:
+    def __init__(self):
+        with open(CONNECTOME_BASE_PATH, 'rb') as f:
+            self.connectome: dict = pickle.load(f)
+            self.synapses = self._get_connectome_inter_synapses()
 
+    def _get_connectome_inter_synapses(self) -> list[Synapse]:
+        """
+        :return: a list of synapses connecting two neurons in the connectome
+        """
+        synapses = []
+        for neuron in self.connectome.values():
+            synapses.extend([syn for syn in neuron.post_synapses if syn.post_pt_root_id in self.connectome])
+        return synapses
 
-def download_dataset():
-    os.makedirs(DATA_BASE_PATH, exist_ok=True)
+    def calculate_cell_type_conn_matrix(self, cell_type: str, type_space: list[str]) -> np.ndarray:
+        """
+        :param cell_type: str: (mtype, cell_type, clf_type) which are attributes of neuron class
+        :param type_space: list[str]: all possible types of cell_type
+        :return: connectivity matrix of type cell_type
+        """
 
-    client = CAVEclient('minnie65_public')
-    cell_types = pd.read_csv('data/aibs_metamodel_celltypes_v661.csv')
-    m_types = pd.read_csv('data/aibs_metamodel_mtypes_v661_v2.csv')
-    cell_types.set_index('root_id', inplace=True)
-    m_types.set_index('root_id', inplace=True)
+        conn_matrix = np.zeros((len(type_space), len(type_space)), dtype=int)
+        type_index = {t: i for i, t in enumerate(type_space)}
 
-    batch_size = 10
-    batch_size = 10
-    connectome = {}
+        for syn in self.synapses:
+            pre_syn_neuron_type = getattr(self.connectome[syn.pre_pt_root_id], cell_type)
+            post_syn_neuron_type = getattr(self.connectome[syn.post_pt_root_id], cell_type)
+            conn_matrix[type_index[pre_syn_neuron_type], type_index[post_syn_neuron_type]] += 1
 
-    for start in tqdm(range(0, len(m_types), batch_size)):
-        end = min(start + batch_size, len(m_types))
-        batch_ids = m_types.index[start:end]
+        return conn_matrix
 
-        batch_ids = batch_ids[batch_ids != 0]
-        if len(batch_ids) == 0:
-            continue
+    def calculate_cell_type_synapse_attr(self,
+                                         cell_type: str,
+                                         type_space: list[str],
+                                         direction: SynapseDirection,
+                                         syn_attr: str,
+                                         ) -> dict:
+        """
+        :param cell_type: str: (mtype, cell_type, clf_type) which are attributes of neuron class
+        :param type_space: list[str]: all possible types of cell_type
+        :param direction: SynapseDirection (input, output)
+        :param syn_attr: str: (size)
+        :return: data represented in a dict, where each key is a cell_type, and the value are list of all
+        aggregated values of the given calculated attribute in a tuple format: (syn_id, attr).
+        """
+        synapse_attributes = {type_: [] for type_ in type_space}
 
-        try:
-            classification_systems = cell_types.loc[batch_ids, 'classification_system'].values
-            clf_types = [ClfType.excitatory if s == 'excitatory_neuron' else ClfType.inhibitory for s in
-                         classification_systems]
+        for syn in self.synapses:
+            pre_syn_neuron_type = getattr(self.connectome[syn.pre_pt_root_id], cell_type)
+            post_syn_neuron_type = getattr(self.connectome[syn.post_pt_root_id], cell_type)
 
-            mtype_values = m_types.loc[batch_ids, 'cell_type']
-            cell_type_values = cell_types.loc[batch_ids, 'cell_type']
-            positions = cell_types.loc[batch_ids, ['pt_position_x', 'pt_position_y', 'pt_position_z']].to_numpy()
-            volumes = cell_types.loc[batch_ids, 'volume']
+            syn_attr_data = getattr(syn, syn_attr)
+            syn_data = (syn.id_, syn_attr_data)
 
-            # Batch fashion
-            pre_synapses = syn_table_to_synapses(client.materialize.synapse_query(post_ids=list(batch_ids.values)))
-            post_synapses = syn_table_to_synapses(client.materialize.synapse_query(pre_ids=list(batch_ids.values)))
+            if direction == SynapseDirection.output:
+                synapse_attributes[pre_syn_neuron_type].append(syn_data)
+            else:
+                synapse_attributes[post_syn_neuron_type].append(syn_data)
 
-            for i, cell_id in enumerate(batch_ids):
-                cell_post_synapses = [syn for syn in post_synapses if syn.pre_pt_root_id == cell_id]
-                cell_pre_synapses = [syn for syn in pre_synapses if syn.post_pt_root_id == cell_id]
+        return synapse_attributes
 
-                neuron = Neuron(root_id=cell_id,
-                                clf_type=clf_types[i],
-                                cell_type=cell_type_values.iloc[i],
-                                mtype=mtype_values.iloc[i],
-                                position=positions[i],
-                                volume=volumes.iloc[i],
-                                pre_synapses=cell_pre_synapses,
-                                post_synapses=cell_post_synapses)
+    def calculate_cell_type_synapse_dist_to_soma(self, cell_type: str, type_space: list[str]) -> dict:
+        """
+        Calculate the distances of synapses to a post-synaptic neuron soma, aggregated according to cell type
+        :param cell_type: str: (mtype, cell_type, clf_type) which are attributes of neuron class
+        :param type_space: list[str]: all possible types of cell_type
+        :return: data represented in a dict, where each key is a cell_type, and the value are list of all
+        distances to soma, tuple format: (syn_id, dist).
+        """
+        distances = {type_: [] for type_ in type_space}
 
-                connectome[cell_id] = neuron
-
-        except Exception as e:
-            print(f'Error in chunk {start}. cell_ids {batch_ids}')
-            print(e)
-
-    with open(CONNECTOME_BASE_PATH, 'wb') as f:
-        pickle.dump(connectome, f, protocol=pickle.HIGHEST_PROTOCOL)
-
-
-def download_neuron_skeletons():
-    client = CAVEclient('minnie65_public')
-    m_types = pd.read_csv('data/aibs_metamodel_mtypes_v661_v2.csv')
-    m_types.set_index('root_id', inplace=True)
-    os.makedirs(SKELETONS_DIR_PATH, exist_ok=True)
-
-    for cell_id in tqdm(m_types.index):
-        if cell_id == 0:
-            continue
-        try:
-            sk_dict = client.skeleton.get_skeleton(cell_id, output_format='json')
-
-            with open(f'{SKELETONS_DIR_PATH}/{cell_id}.json', 'w') as f:
-                json.dump(sk_dict, f)
-        except Exception as e:
-            print(f'err in {cell_id}')
-            print(e)
-
-
-def load_local_dataset() -> dict:
-    with open(CONNECTOME_BASE_PATH, 'rb') as f:
-        return pickle.load(f)
-
-
-def get_connectome_inter_synapses() -> list[Synapse]:
-    """
-    :return: a list of synapses connecting two neurons in the connectome
-    """
-    connectome = load_local_dataset()
-    synapses = []
-    for neuron in connectome.values():
-        synapses.extend([syn for syn in neuron.post_synapses if syn.post_pt_root_id in connectome])
-    return synapses
-
-
-def calculate_cell_type_conn_matrix(cell_type: str, type_space: list[str]) -> np.ndarray:
-    """
-    :param cell_type: str: (mtype, cell_type, clf_type) which are attributes of neuron class
-    :param type_space: list[str]: all possible types of cell_type
-    :return: connectivity matrix of type cell_type
-    """
-    connectome = load_local_dataset()
-    synapses = get_connectome_inter_synapses()
-
-    conn_matrix = np.zeros((len(type_space), len(type_space)), dtype=int)
-    type_index = {t: i for i, t in enumerate(type_space)}
-
-    for syn in synapses:
-        pre_syn_neuron_type = getattr(connectome[syn.pre_pt_root_id], cell_type)
-        post_syn_neuron_type = getattr(connectome[syn.post_pt_root_id], cell_type)
-        conn_matrix[type_index[pre_syn_neuron_type], type_index[post_syn_neuron_type]] += 1
-
-    return conn_matrix
-
-
-def calculate_cell_type_synapse_attr(cell_type: str,
-                                     type_space: list[str],
-                                     direction: SynapseDirection,
-                                     syn_attr: str,
-                                     ) -> dict:
-    """
-    :param cell_type: str: (mtype, cell_type, clf_type) which are attributes of neuron class
-    :param type_space: list[str]: all possible types of cell_type
-    :param direction: SynapseDirection (input, output)
-    :param syn_attr: str: (size)
-    :return: data represented in a dict, where each key is a cell_type, and the value are list of all
-    aggregated values of the given calculated attribute in a tuple format: (syn_id, attr).
-    """
-    connectome = load_local_dataset()
-    synapses = get_connectome_inter_synapses()
-    synapse_attributes = {type_: [] for type_ in type_space}
-
-    for syn in synapses:
-        pre_syn_neuron_type = getattr(connectome[syn.pre_pt_root_id], cell_type)
-        post_syn_neuron_type = getattr(connectome[syn.post_pt_root_id], cell_type)
-
-        syn_attr_data = getattr(syn, syn_attr)
-        syn_data = (syn.id_, syn_attr_data)
-
-        if direction == SynapseDirection.output:
-            synapse_attributes[pre_syn_neuron_type].append(syn_data)
-        else:
-            synapse_attributes[post_syn_neuron_type].append(syn_data)
-
-    return synapse_attributes
-
-
-def load_neuron_skeleton(neuron: Neuron) -> Optional[Skeleton]:
-    cell_id = neuron.root_id
-    sk_file_path = f'{SKELETONS_DIR_PATH}/{cell_id}.json'
-    if not os.path.exists(sk_file_path) or os.path.getsize(sk_file_path) == 0:
-        return None
-
-    with open(sk_file_path) as f:
-        sk_dict = json.load(f)
-
-        return meshparty.skeleton.Skeleton(
-            vertices=np.array(sk_dict['vertices']),
-            edges=np.array(sk_dict['edges']),
-            mesh_to_skel_map=sk_dict['mesh_to_skel_map'],
-            vertex_properties=sk_dict['vertex_properties'],
-            root=sk_dict['root'],
-            meta=sk_dict['meta'],
-        )
-
-
-def calculate_cell_type_synapse_dist_to_soma(cell_type: str, type_space: list[str]) -> dict:
-    """
-    Calculate the distances of synapses to a post-synaptic neuron soma, aggregated according to cell type
-    :param cell_type: str: (mtype, cell_type, clf_type) which are attributes of neuron class
-    :param type_space: list[str]: all possible types of cell_type
-    :return: data represented in a dict, where each key is a cell_type, and the value are list of all
-    distances to soma, tuple format: (syn_id, dist).
-    """
-    connectome = load_local_dataset()
-    distances = {type_: [] for type_ in type_space}
-
-    for neuron in connectome.values():
-        sk = load_neuron_skeleton(neuron)
-        if sk is None:
-            continue
-
-        all_syn_xyz = [syn.center_position * np.array([4, 4, 40]) for syn in neuron.pre_synapses]
-        syn_ds, sk_syn_inds = sk.kdtree.query(all_syn_xyz)
-        distances_to_soma = [sk.distance_to_root[s] for s in sk_syn_inds]
-
-        for syn_idx, syn in enumerate(neuron.pre_synapses):
-            if syn.pre_pt_root_id not in connectome:
+        for neuron in self.connectome.values():
+            sk = neuron.load_skeleton()
+            if sk is None:
                 continue
-            pre_syn_neuron_type = getattr(connectome[syn.pre_pt_root_id], cell_type)
-            syn_dist = distances_to_soma[syn_idx]
-            syn_data = (syn.id_, syn_dist)
-            distances[pre_syn_neuron_type].append(syn_data)
 
-    return distances
+            all_syn_xyz = [syn.center_position * np.array([4, 4, 40]) for syn in neuron.pre_synapses]
+            syn_ds, sk_syn_inds = sk.kdtree.query(all_syn_xyz)
+            distances_to_soma = [sk.distance_to_root[s] for s in sk_syn_inds]
+
+            for syn_idx, syn in enumerate(neuron.pre_synapses):
+                if syn.pre_pt_root_id not in self.connectome:
+                    continue
+                pre_syn_neuron_type = getattr(self.connectome[syn.pre_pt_root_id], cell_type)
+                syn_dist = distances_to_soma[syn_idx]
+                syn_data = (syn.id_, syn_dist)
+                distances[pre_syn_neuron_type].append(syn_data)
+
+        return distances
 
 
 if __name__ == "__main__":
-    download_neuron_skeletons()
-    # download_dataset()
-    d = calculate_cell_type_synapse_attr('cell_type', cell_types, SynapseDirection.output, 'size')
+    connectome = Connectome()
+    d = connectome.calculate_cell_type_synapse_attr('cell_type',
+                                                    cell_types,
+                                                    SynapseDirection.output,
+                                                    'size')
     print(d)

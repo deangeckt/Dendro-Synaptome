@@ -1,7 +1,14 @@
-import numpy as np
+import json
+import os
 
+import numpy as np
+from typing import Optional
+
+from connectome_types import SKELETONS_DIR_PATH
 from synapse import Synapse
 from connectome_types import ClfType
+from meshparty.skeleton import Skeleton
+import meshparty.skeleton_io
 
 
 class Neuron:
@@ -33,3 +40,21 @@ class Neuron:
                 f"volume={self.volume},"
                 f"#pre_synapses={len(self.pre_synapses)},"
                 f"#post_synapses={len(self.post_synapses)})")
+
+    def load_skeleton(self) -> Optional[Skeleton]:
+        cell_id = self.root_id
+        sk_file_path = f'{SKELETONS_DIR_PATH}/{cell_id}.json'
+        if not os.path.exists(sk_file_path) or os.path.getsize(sk_file_path) == 0:
+            return None
+
+        with open(sk_file_path) as f:
+            sk_dict = json.load(f)
+
+            return meshparty.skeleton.Skeleton(
+                vertices=np.array(sk_dict['vertices']),
+                edges=np.array(sk_dict['edges']),
+                mesh_to_skel_map=sk_dict['mesh_to_skel_map'],
+                vertex_properties=sk_dict['vertex_properties'],
+                root=sk_dict['root'],
+                meta=sk_dict['meta'],
+            )

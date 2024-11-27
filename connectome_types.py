@@ -1,8 +1,9 @@
 from enum import Enum
 
 DATA_BASE_PATH = 'data/'
-CONNECTOME_BASE_PATH = 'data/connectome_base_100.pkl'
+CONNECTOME_BASE_PATH = 'data/connectome_base.pkl'
 SKELETONS_DIR_PATH = 'data/skeletons'
+NEURONS_PATH = 'data/neurons'
 
 
 class SynapseDirection(str, Enum):

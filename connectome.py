@@ -1,14 +1,22 @@
 import pickle
 import numpy as np
+
+from neuron import Neuron
 from synapse import Synapse
 from connectome_types import SynapseDirection, cell_types, CONNECTOME_BASE_PATH
 
 
 class Connectome:
+    ConnectomeType = dict[int, Neuron]
+
     def __init__(self):
         with open(CONNECTOME_BASE_PATH, 'rb') as f:
-            self.connectome: dict = pickle.load(f)
+            self.connectome: Connectome.ConnectomeType = pickle.load(f)
             self.synapses = self._get_connectome_inter_synapses()
+
+            print('Connectome:')
+            print(f'\t#neurons: {len(self.connectome.keys())}')
+            print(f'\t#synapses: {len(self.synapses)}')
 
     def _get_connectome_inter_synapses(self) -> list[Synapse]:
         """

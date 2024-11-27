@@ -6,6 +6,7 @@ from caveclient import CAVEclient
 from tqdm import tqdm
 import json
 
+from connectome import Connectome
 from neuron import Neuron
 from synapse import Synapse
 from connectome_types import ClfType, DATA_BASE_PATH, CONNECTOME_BASE_PATH, SKELETONS_DIR_PATH, NEURONS_PATH
@@ -32,7 +33,7 @@ def download_dataset_batch():
     m_types.set_index('root_id', inplace=True)
 
     batch_size = 1
-    connectome = {}
+    connectome: Connectome.ConnectomeType = {}
 
     for start in tqdm(range(0, len(m_types), batch_size)):
         end = min(start + batch_size, len(m_types))
@@ -116,7 +117,7 @@ def download_dataset_per_neuron():
 
 
 def combine_neurons_to_connectome_dataset():
-    connectome = {}
+    connectome: Connectome.ConnectomeType = {}
     for filename in os.listdir(NEURONS_PATH):
         file = os.path.join(NEURONS_PATH, filename)
         with open(file, 'rb') as f:
@@ -152,5 +153,5 @@ def download_neuron_skeletons():
 
 if __name__ == "__main__":
     # download_neuron_skeletons()
-    # download_dataset_per_neuron()
-    combine_neurons_to_connectome_dataset()
+    download_dataset_per_neuron()
+    # combine_neurons_to_connectome_dataset()

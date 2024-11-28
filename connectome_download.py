@@ -82,12 +82,15 @@ def download_dataset_batch():
 
 def download_dataset_per_neuron():
     client = CAVEclient('minnie65_public')
-    cell_types = pd.read_csv('data/aibs_metamodel_celltypes_v661.csv')
-    m_types = pd.read_csv('data/aibs_metamodel_mtypes_v661_v2.csv')
-    cell_types.set_index('root_id', inplace=True)
-    m_types.set_index('root_id', inplace=True)
-    os.makedirs(NEURONS_PATH, exist_ok=True)
 
+    cell_types = pd.read_csv('data/aibs_metamodel_celltypes_v661.csv')
+    cell_types = cell_types[cell_types.classification_system != 'nonneuron']
+    cell_types.set_index('root_id', inplace=True)
+
+    m_types = pd.read_csv('data/aibs_metamodel_mtypes_v661_v2.csv')
+    m_types.set_index('root_id', inplace=True)
+
+    os.makedirs(NEURONS_PATH, exist_ok=True)
     for cell_id in tqdm(m_types.index):
         if cell_id == 0:
             continue

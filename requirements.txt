@@ -30,3 +30,4 @@ fastremap==1.15.0
 orjson==3.10.11
 scikit-learn==1.5.2
 multiwrapper==0.1.1
+treelib

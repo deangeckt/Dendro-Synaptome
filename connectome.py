@@ -1,43 +1,31 @@
 import pickle
+from typing import TypedDict
+
 import numpy as np
 from tqdm import tqdm
 
+from connectome_types import SynapseDirection, cell_types, CONNECTOME_BASE_PATH
 from neuron import Neuron
 from synapse import Synapse
-from connectome_types import SynapseDirection, cell_types, CONNECTOME_BASE_PATH
+
+NeuronsDict = dict[int, Neuron]
+
+
+class ConnectomeDict(TypedDict):
+    neurons: NeuronsDict
+    synapses: list[Synapse]
 
 
 class Connectome:
-    NeuronsDict = dict[int, Neuron]
-
     def __init__(self):
         with open(CONNECTOME_BASE_PATH, 'rb') as f:
-            self.neurons: Connectome.NeuronsDict = pickle.load(f)
-            self.synapses = self._get_connectome_inter_synapses()
+            connectome_dict: ConnectomeDict = pickle.load(f)
+            self.neurons: NeuronsDict = connectome_dict['neurons']
+            self.synapses: list[Synapse] = connectome_dict['synapses']
 
             print('Connectome:')
             print(f'\t#neurons: {len(self.neurons.keys())}')
             print(f'\t#synapses: {len(self.synapses)}')
-
-    def _get_connectome_inter_synapses(self) -> list[Synapse]:
-        """
-        :return: a list of (inter) synapses connecting two neurons in the connectome
-        """
-        synapses = []
-        conn_pre_synapses = 0
-        conn_post_synapses = 0
-        for neuron in tqdm(self.neurons.values()):
-            synapses.extend([syn for syn in neuron.pre_synapses if syn.pre_pt_root_id in self.neurons])
-            conn_pre_synapses += len(neuron.pre_synapses)
-            conn_post_synapses += len(neuron.post_synapses)
-
-        print(f'\t#pre  synapses in the connectome: {conn_pre_synapses}')
-        print(f'\t#post synapses in the connectome: {conn_post_synapses}')
-
-        for syn in tqdm(synapses):
-            assert syn.dist_to_post_syn_soma != -1.0
-
-        return synapses
 
     def get_cell_type_conn_matrix(self, cell_type: str, type_space: list[str]) -> np.ndarray:
         """
@@ -48,7 +36,7 @@ class Connectome:
         conn_matrix = np.zeros((len(type_space), len(type_space)), dtype=int)
         type_index = {t: i for i, t in enumerate(type_space)}
 
-        for syn in self.synapses:
+        for syn in tqdm(self.synapses):
             pre_syn_neuron_type = getattr(self.neurons[syn.pre_pt_root_id], cell_type)
             post_syn_neuron_type = getattr(self.neurons[syn.post_pt_root_id], cell_type)
             conn_matrix[type_index[pre_syn_neuron_type], type_index[post_syn_neuron_type]] += 1
@@ -71,7 +59,7 @@ class Connectome:
         """
         synapse_attributes = {type_: [] for type_ in type_space}
 
-        for syn in self.synapses:
+        for syn in tqdm(self.synapses):
             pre_syn_neuron_type = getattr(self.neurons[syn.pre_pt_root_id], cell_type)
             post_syn_neuron_type = getattr(self.neurons[syn.post_pt_root_id], cell_type)
 

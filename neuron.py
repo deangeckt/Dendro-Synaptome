@@ -4,9 +4,9 @@ import os
 import numpy as np
 from typing import Optional
 
-from connectome_types import SKELETONS_DIR_PATH
 from synapse import Synapse
-from connectome_types import ClfType
+from connectome_types import ClfType, SKELETONS_DIR_PATH
+
 from meshparty.skeleton import Skeleton
 import meshparty.skeleton_io
 
@@ -21,15 +21,19 @@ class Neuron:
                  volume: float,
                  pre_synapses: list[Synapse],
                  post_synapses: list[Synapse]):
-
         self.root_id = root_id
         self.clf_type = clf_type
         self.cell_type = cell_type
         self.mtype = mtype
         self.position = position
         self.volume = volume
-        self.pre_synapses = pre_synapses
+
+        # invalidated after connectome loaded
         self.post_synapses = post_synapses
+        self.pre_synapses = pre_synapses
+        self.num_of_post_synapses = -1
+        self.num_of_ds_pre_synapses = -1
+        self.num_of_ds_post_synapses = -1
 
     def __repr__(self):
         return (f"Neuron(root_id={self.root_id},"
@@ -38,8 +42,7 @@ class Neuron:
                 f"mtype={self.mtype},"
                 f"position={self.position},"
                 f"volume={self.volume},"
-                f"#pre_synapses={len(self.pre_synapses)},"
-                f"#post_synapses={len(self.post_synapses)})")
+                )
 
     def load_skeleton(self) -> Optional[Skeleton]:
         cell_id = self.root_id
@@ -58,3 +61,16 @@ class Neuron:
                 root=sk_dict['root'],
                 meta=sk_dict['meta'],
             )
+
+    def validate_neuron(self,
+                        pre_synapses: list[Synapse],
+                        num_post_syn: int,
+                        num_ds_post: int,
+                        num_ds_pre: int
+                        ):
+        self.pre_synapses = pre_synapses
+        self.post_synapses = []
+
+        self.num_of_post_synapses = num_post_syn
+        self.num_of_ds_post_synapses = num_ds_post
+        self.num_of_ds_pre_synapses = num_ds_pre

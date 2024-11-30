@@ -6,7 +6,7 @@ from caveclient import CAVEclient
 from tqdm import tqdm
 import json
 
-from connectome import Connectome
+from connectome import NeuronsDict, ConnectomeDict
 from connectome_offline_utils import calculate_synapse_dist_to_post_syn_soma, validate_neurons_files_and_skeletons
 from neuron import Neuron
 from synapse import Synapse
@@ -70,17 +70,40 @@ def download_neurons_dataset():
 def combine_neurons_dataset():
     validate_neurons_files_and_skeletons()
 
-    neurons: Connectome.NeuronsDict = {}
+    neurons_ids = {int(f.split('.')[0]) for f in os.listdir(NEURONS_PATH)}
+    neurons: NeuronsDict = {}
+    synapses = []
+    dataset_pre_synapses = 0
+    dataset_post_synapses = 0
+
     for filename in tqdm(os.listdir(NEURONS_PATH)):
-        file = os.path.join(NEURONS_PATH, filename)
-        with open(file, 'rb') as f:
+        with open(os.path.join(NEURONS_PATH, filename), 'rb') as f:
             neuron: Neuron = pickle.load(f)
+            dataset_pre_synapses += len(neuron.pre_synapses)
+            dataset_post_synapses += len(neuron.post_synapses)
+
+            pre_synapses = [syn for syn in neuron.pre_synapses if syn.pre_pt_root_id in neurons_ids]
+            post_synapses = [syn for syn in neuron.post_synapses if syn.post_pt_root_id in neurons_ids]
+
+            neuron.validate_neuron(pre_synapses=pre_synapses,
+                                   num_post_syn=len(post_synapses),
+                                   num_ds_pre=len(neuron.pre_synapses),
+                                   num_ds_post=len(neuron.post_synapses))
+
             neurons[neuron.root_id] = neuron
+            synapses.extend(pre_synapses)
+
+    print(f'#pre  synapses in the dataset: {dataset_pre_synapses}')
+    print(f'#post synapses in the dataset: {dataset_post_synapses}')
+    print(f'#synapses: {len(synapses)}')
 
     calculate_synapse_dist_to_post_syn_soma(neurons)
+    for syn in tqdm(synapses):
+        assert syn.dist_to_post_syn_soma != -1.0
 
+    connectome_dict: ConnectomeDict = {'neurons': neurons, 'synapses': synapses}
     with open(CONNECTOME_BASE_PATH, 'wb') as f:
-        pickle.dump(neurons, f, protocol=pickle.HIGHEST_PROTOCOL)
+        pickle.dump(connectome_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def download_neuron_skeletons():

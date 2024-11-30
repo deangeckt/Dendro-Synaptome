@@ -1,7 +1,25 @@
+import os
+
 import numpy as np
 from tqdm import tqdm
 
 from connectome import Connectome
+from connectome_types import NEURONS_PATH, SKELETONS_DIR_PATH
+
+
+def validate_neurons_files_and_skeletons():
+    neuron_files = os.listdir(NEURONS_PATH)
+    neuron_files = [n.split('.')[0] for n in neuron_files]
+    neuron_files = set(neuron_files)
+
+    sk_files = os.listdir(SKELETONS_DIR_PATH)
+    sk_files = [n.split('.')[0] for n in sk_files]
+    sk_files = set(sk_files)
+
+    print(f'# neuron files {len(neuron_files)}')
+    print(f'# skeleton files {len(sk_files)}')
+
+    assert neuron_files == sk_files
 
 
 def calculate_synapse_dist_to_post_syn_soma(neurons: Connectome.NeuronsDict):

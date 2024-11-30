@@ -7,7 +7,7 @@ from tqdm import tqdm
 import json
 
 from connectome import Connectome
-from connectome_offline_utils import calculate_synapse_dist_to_post_syn_soma
+from connectome_offline_utils import calculate_synapse_dist_to_post_syn_soma, validate_neurons_files_and_skeletons
 from neuron import Neuron
 from synapse import Synapse
 from connectome_types import ClfType, CONNECTOME_BASE_PATH, SKELETONS_DIR_PATH, NEURONS_PATH
@@ -62,6 +62,8 @@ def download_neurons_dataset():
 
 
 def combine_neurons_dataset():
+    validate_neurons_files_and_skeletons()
+
     neurons: Connectome.NeuronsDict = {}
     for filename in os.listdir(NEURONS_PATH):
         file = os.path.join(NEURONS_PATH, filename)

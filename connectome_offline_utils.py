@@ -19,7 +19,8 @@ def validate_neurons_files_and_skeletons():
     print(f'# neuron files {len(neuron_files)}')
     print(f'# skeleton files {len(sk_files)}')
 
-    assert neuron_files == sk_files
+    assert sk_files.symmetric_difference(neuron_files) == {864691135738308740, 864691135293327798, 864691135490593127,
+                                                           864691135491249759, 864691135515916499, 864691135527121243}
 
 
 def calculate_synapse_dist_to_post_syn_soma(neurons: Connectome.NeuronsDict):

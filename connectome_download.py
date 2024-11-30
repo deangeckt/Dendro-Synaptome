@@ -26,13 +26,20 @@ def syn_table_to_synapses(df: pd.DataFrame) -> list[Synapse]:
 
 def download_neurons_dataset():
     client = CAVEclient('minnie65_public')
-
     cell_types = pd.read_csv('data/aibs_metamodel_celltypes_v661.csv')
     cell_types = cell_types[cell_types.classification_system != 'nonneuron']
-    cell_types.set_index('root_id', inplace=True)
 
     m_types = pd.read_csv('data/aibs_metamodel_mtypes_v661_v2.csv')
     m_types = m_types[m_types.root_id != 0]
+
+    duplications = [864691136101343093, 864691135495542672, 864691136990457749, 864691135952250403]
+    mask = ~((cell_types['root_id'].isin(duplications)) & (cell_types.duplicated('root_id', keep='last')))
+    cell_types = cell_types[mask]
+
+    mask = ~((m_types['root_id'].isin(duplications)) & (m_types.duplicated('root_id', keep='last')))
+    m_types = m_types[mask]
+
+    cell_types.set_index('root_id', inplace=True)
     m_types.set_index('root_id', inplace=True)
 
     os.makedirs(NEURONS_PATH, exist_ok=True)
@@ -40,7 +47,6 @@ def download_neurons_dataset():
         neuron_file_path = f'{NEURONS_PATH}/{cell_id}.pkl'
         if os.path.exists(neuron_file_path):
             continue
-
         try:
             clf_type = ClfType.excitatory if (cell_types.at[cell_id, 'classification_system']
                                               == 'excitatory_neuron') else ClfType.inhibitory

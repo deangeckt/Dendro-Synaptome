@@ -1,5 +1,6 @@
 import pickle
 import numpy as np
+from tqdm import tqdm
 
 from neuron import Neuron
 from synapse import Synapse
@@ -20,13 +21,20 @@ class Connectome:
 
     def _get_connectome_inter_synapses(self) -> list[Synapse]:
         """
-        :return: a list of synapses connecting two neurons in the connectome
+        :return: a list of (inter) synapses connecting two neurons in the connectome
         """
         synapses = []
-        for neuron in self.neurons.values():
+        conn_pre_synapses = 0
+        conn_post_synapses = 0
+        for neuron in tqdm(self.neurons.values()):
             synapses.extend([syn for syn in neuron.pre_synapses if syn.pre_pt_root_id in self.neurons])
+            conn_pre_synapses += len(neuron.pre_synapses)
+            conn_post_synapses += len(neuron.post_synapses)
 
-        for syn in synapses:
+        print(f'\t#pre  synapses in the connectome: {conn_pre_synapses}')
+        print(f'\t#post synapses in the connectome: {conn_post_synapses}')
+
+        for syn in tqdm(synapses):
             assert syn.dist_to_post_syn_soma != -1.0
 
         return synapses

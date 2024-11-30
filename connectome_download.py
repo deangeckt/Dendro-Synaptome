@@ -71,7 +71,7 @@ def combine_neurons_dataset():
     validate_neurons_files_and_skeletons()
 
     neurons: Connectome.NeuronsDict = {}
-    for filename in os.listdir(NEURONS_PATH):
+    for filename in tqdm(os.listdir(NEURONS_PATH)):
         file = os.path.join(NEURONS_PATH, filename)
         with open(file, 'rb') as f:
             neuron: Neuron = pickle.load(f)
@@ -105,6 +105,6 @@ def download_neuron_skeletons():
 
 
 if __name__ == "__main__":
-    # combine_neurons_dataset()
+    combine_neurons_dataset()
     # download_neuron_skeletons()
-    download_neurons_dataset()
+    # download_neurons_dataset()

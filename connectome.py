@@ -43,6 +43,25 @@ class Connectome:
 
         return conn_matrix
 
+    def get_cell_type_distribution(self,
+                                   cell_type: str,
+                                   type_space: list[str],
+                                   direction: SynapseDirection,
+                                   ) -> dict:
+        """
+        :param cell_type: str: (mtype, cell_type, clf_type) which are attributes of neuron class
+        :param type_space: list[str]: all possible types of cell_type
+        :param direction: SynapseDirection (input, output)
+        :return: cell type distribution based on the given direction
+        """
+        data = {type_: [] for type_ in type_space}
+        for syn in tqdm(self.synapses):
+            pre_syn_neuron_type = getattr(self.neurons[syn.pre_pt_root_id], cell_type)
+            post_syn_neuron_type = getattr(self.neurons[syn.post_pt_root_id], cell_type)
+            neuron_type = pre_syn_neuron_type if direction == SynapseDirection.output else post_syn_neuron_type
+            data[neuron_type] += 1
+        return data
+
     def get_cell_type_synapse_attr(self,
                                    cell_type: str,
                                    type_space: list[str],
@@ -63,6 +82,11 @@ class Connectome:
             pre_syn_neuron_type = getattr(self.neurons[syn.pre_pt_root_id], cell_type)
             post_syn_neuron_type = getattr(self.neurons[syn.post_pt_root_id], cell_type)
 
+            # For some neurons the skeleton file is corrupted
+            if syn_attr == 'dist_to_post_syn_soma':
+                if not hasattr(syn, 'dist_to_post_syn_soma') or syn.dist_to_post_syn_soma == -1.0:
+                    continue
+
             syn_attr_data = getattr(syn, syn_attr)
             syn_data = (syn.id_, syn_attr_data)
 
@@ -76,8 +100,10 @@ class Connectome:
 
 if __name__ == "__main__":
     connectome = Connectome()
-    d = connectome.get_cell_type_synapse_attr('cell_type',
-                                              cell_types,
-                                              SynapseDirection.output,
-                                              'dist_to_post_syn_soma')
-    print(d)
+    mtype_dist_in = connectome.get_cell_type_distribution('mtype', m_types, SynapseDirection.input)
+
+    # d = connectome.get_cell_type_synapse_attr('cell_type',
+    #                                           cell_types,
+    #                                           SynapseDirection.output,
+    #                                           'dist_to_post_syn_soma')
+    # print(d)

@@ -21,6 +21,7 @@ class Neuron:
                  volume: float,
                  pre_synapses: list[Synapse],
                  post_synapses: list[Synapse]):
+
         self.root_id = root_id
         self.clf_type = clf_type
         self.cell_type = cell_type

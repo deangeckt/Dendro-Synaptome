@@ -85,21 +85,23 @@ def combine_neurons_dataset():
             pre_synapses = [syn for syn in neuron.pre_synapses if syn.pre_pt_root_id in neurons_ids]
             post_synapses = [syn for syn in neuron.post_synapses if syn.post_pt_root_id in neurons_ids]
 
+            if not pre_synapses and not post_synapses:
+                continue
+
             neuron.validate_neuron(pre_synapses=pre_synapses,
                                    num_post_syn=len(post_synapses),
                                    num_ds_pre=len(neuron.pre_synapses),
                                    num_ds_post=len(neuron.post_synapses))
 
+            calculate_synapse_dist_to_post_syn_soma(neuron)
             neurons[neuron.root_id] = neuron
-            synapses.extend(pre_synapses)
+            synapses.extend(neuron.pre_synapses)
 
     print(f'#pre  synapses in the dataset: {dataset_pre_synapses}')
     print(f'#post synapses in the dataset: {dataset_post_synapses}')
     print(f'#synapses: {len(synapses)}')
+    print(f'#neurons: {len(neurons.keys())}')
 
-    calculate_synapse_dist_to_post_syn_soma(neurons)
-    for syn in tqdm(synapses):
-        assert syn.dist_to_post_syn_soma != -1.0
 
     connectome_dict: ConnectomeDict = {'neurons': neurons, 'synapses': synapses}
     with open(CONNECTOME_BASE_PATH, 'wb') as f:
@@ -117,7 +119,6 @@ def download_neuron_skeletons():
         sk_file_path = f'{SKELETONS_DIR_PATH}/{cell_id}.json'
         if os.path.exists(sk_file_path):
             continue
-
         try:
             sk_dict = client.skeleton.get_skeleton(cell_id, output_format='json')
             with open(sk_file_path, 'w') as f:
@@ -128,6 +129,80 @@ def download_neuron_skeletons():
 
 
 if __name__ == "__main__":
+    failed_sk = {864691134965932575,
+                 864691135183340034,
+                 864691135368655609,
+                 864691135395659765,
+                 864691135395662581,
+                 864691135430150448,
+                 864691135430156592,
+                 864691135430169648,
+                 864691135447917396,
+                 864691135479759814,
+                 864691135479767238,
+                 864691135492640607,
+                 864691135503317597,
+                 864691135570667142,
+                 864691135610942983,
+                 864691135688499936,
+                 864691135716530202,
+                 864691135731801017,
+                 864691135731803321,
+                 864691135782381392,
+                 864691135816656207,
+                 864691135860081768,
+                 864691135860136552,
+                 864691135860313960,
+                 864691135876855379,
+                 864691135919820464,
+                 864691135926300942,
+                 864691135927205588,
+                 864691135927205844,
+                 864691135927217364,
+                 864691135927218388,
+                 864691135927342292,
+                 864691135927571156,
+                 864691135939327489,
+                 864691135939329025,
+                 864691135940871846,
+                 864691135945542180,
+                 864691135945550116,
+                 864691135945550628,
+                 864691135945551908,
+                 864691135945553700,
+                 864691135945562660,
+                 864691135945705508,
+                 864691135945715236,
+                 864691135945888548,
+                 864691135945987620,
+                 864691135953453603,
+                 864691135974872687,
+                 864691135974883183,
+                 864691135974987631,
+                 864691135974987887,
+                 864691135974992495,
+                 864691135975213679,
+                 864691135975235439,
+                 864691135977176643,
+                 864691135993214913,
+                 864691136006200522,
+                 864691136021867000,
+                 864691136085637996,
+                 864691136335250355,
+                 864691136391836799,
+                 864691136579242516,
+                 864691136618482317,
+                 864691136674341255,
+                 864691136674342535,
+                 864691136926769226,
+                 864691136926770250}
+
     combine_neurons_dataset()
     # download_neuron_skeletons()
     # download_neurons_dataset()
+
+    # client = CAVEclient('minnie65_public')
+    # for cell_id in failed_sk:
+    #     sk_dict = client.skeleton.get_skeleton(cell_id, output_format='json')
+    #     print(sk_dict)
+

@@ -6,7 +6,7 @@ class Synapse:
                  id_: int,
                  pre_pt_root_id: int,
                  post_pt_root_id: int,
-                 size: int,
+                 size: int, # TODO: add description
                  center_position: np.ndarray,
                  dist_to_post_syn_soma: float = -1.0
                  ):

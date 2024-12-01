@@ -19,7 +19,7 @@ class ConnectomeNetwork:
 
         print('Graph:')
         print(f'\t#edges: {len(edges)}')
-        print(f'\t#nodes: {len(edges)}')
+        print(f'\t#nodes: {len(graph.nodes)}')
 
     def basic_graph_plot(self):
         pos = nx.circular_layout(self.graph)

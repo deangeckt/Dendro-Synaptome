@@ -4,6 +4,7 @@ from synapse import Synapse
 
 DATA_BASE_PATH = 'data/'
 CONNECTOME_BASE_PATH = 'data/connectome_base.pkl'
+CONNECTOME_TOY_PATH = 'data/connectome_toy.pkl'
 SKELETONS_DIR_PATH = 'data/skeletons'
 NEURONS_PATH = 'data/neurons'
 

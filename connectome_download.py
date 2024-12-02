@@ -6,11 +6,12 @@ from caveclient import CAVEclient
 from tqdm import tqdm
 import json
 
-from connectome import NeuronsDict, ConnectomeDict
+from connectome import NeuronsDict, ConnectomeDict, Connectome
 from connectome_offline_utils import calculate_synapse_dist_to_post_syn_soma, validate_neurons_files_and_skeletons
 from neuron import Neuron
 from synapse import Synapse
-from connectome_types import ClfType, CONNECTOME_BASE_PATH, SKELETONS_DIR_PATH, NEURONS_PATH
+from connectome_types import ClfType, CONNECTOME_BASE_PATH, SKELETONS_DIR_PATH, NEURONS_PATH, CONNECTOME_TOY_PATH
+import random
 
 
 def syn_table_to_synapses(df: pd.DataFrame) -> list[Synapse]:
@@ -67,6 +68,26 @@ def download_neurons_dataset():
             print(e)
 
 
+def download_neuron_skeletons():
+    client = CAVEclient('minnie65_public')
+    m_types = pd.read_csv('data/aibs_metamodel_mtypes_v661_v2.csv')
+    m_types = m_types[m_types.root_id != 0]
+    m_types.set_index('root_id', inplace=True)
+    os.makedirs(SKELETONS_DIR_PATH, exist_ok=True)
+
+    for cell_id in tqdm(m_types.index):
+        sk_file_path = f'{SKELETONS_DIR_PATH}/{cell_id}.json'
+        if os.path.exists(sk_file_path):
+            continue
+        try:
+            sk_dict = client.skeleton.get_skeleton(cell_id, output_format='json')
+            with open(sk_file_path, 'w') as f:
+                json.dump(sk_dict, f)
+        except Exception as e:
+            print(f'err in {cell_id}')
+            print(e)
+
+
 def combine_neurons_dataset():
     validate_neurons_files_and_skeletons()
 
@@ -107,28 +128,24 @@ def combine_neurons_dataset():
         pickle.dump(connectome_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-def download_neuron_skeletons():
-    client = CAVEclient('minnie65_public')
-    m_types = pd.read_csv('data/aibs_metamodel_mtypes_v661_v2.csv')
-    m_types = m_types[m_types.root_id != 0]
-    m_types.set_index('root_id', inplace=True)
-    os.makedirs(SKELETONS_DIR_PATH, exist_ok=True)
+def create_toy_connectome():
+    connectome = Connectome()
+    toy_size = 1000
 
-    for cell_id in tqdm(m_types.index):
-        sk_file_path = f'{SKELETONS_DIR_PATH}/{cell_id}.json'
-        if os.path.exists(sk_file_path):
-            continue
-        try:
-            sk_dict = client.skeleton.get_skeleton(cell_id, output_format='json')
-            with open(sk_file_path, 'w') as f:
-                json.dump(sk_dict, f)
-        except Exception as e:
-            print(f'err in {cell_id}')
-            print(e)
+    synapses: list[Synapse] = random.sample(connectome.synapses, toy_size)
+    neurons: NeuronsDict = {}
+
+    for syn in tqdm(synapses):
+        neurons[syn.post_pt_root_id] = connectome.neurons[syn.post_pt_root_id]
+        neurons[syn.pre_pt_root_id] = connectome.neurons[syn.pre_pt_root_id]
+
+    connectome_dict: ConnectomeDict = {'neurons': neurons, 'synapses': synapses}
+    with open(CONNECTOME_TOY_PATH, 'wb') as f:
+        pickle.dump(connectome_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == "__main__":
-    combine_neurons_dataset()
+    create_toy_connectome()
+    # combine_neurons_dataset()
     # download_neuron_skeletons()
     # download_neurons_dataset()
-

@@ -4,7 +4,7 @@ from typing import TypedDict
 import numpy as np
 from tqdm import tqdm
 
-from connectome_types import SynapseDirection, cell_types, CONNECTOME_BASE_PATH, m_types
+from connectome_types import SynapseDirection, cell_types, CONNECTOME_BASE_PATH, m_types, CONNECTOME_TOY_PATH
 from neuron import Neuron
 from synapse import Synapse
 
@@ -18,7 +18,7 @@ class ConnectomeDict(TypedDict):
 
 class Connectome:
     def __init__(self):
-        with open(CONNECTOME_BASE_PATH, 'rb') as f:
+        with open(CONNECTOME_TOY_PATH, 'rb') as f:
             connectome_dict: ConnectomeDict = pickle.load(f)
             self.neurons: NeuronsDict = connectome_dict['neurons']
             self.synapses: list[Synapse] = connectome_dict['synapses']
@@ -101,7 +101,7 @@ class Connectome:
 if __name__ == "__main__":
     connectome = Connectome()
     # TODO: fix
-    mtype_dist_in = connectome.get_cell_type_distribution('mtype', m_types, SynapseDirection.input)
+    # mtype_dist_in = connectome.get_cell_type_distribution('mtype', m_types, SynapseDirection.input)
 
     # d = connectome.get_cell_type_synapse_attr('cell_type',
     #                                           cell_types,

@@ -120,7 +120,13 @@ if __name__ == "__main__":
                  864691136674342535,
                  864691136926769226,
                  864691136926770250}
+    # unable to download (and load) the skeleton
     for n in list(failed_sk):
         with open(os.path.join(NEURONS_PATH, f'{n}.pkl'), 'rb') as f:
             neuron: Neuron = pickle.load(f)
             calculate_synapse_dist_to_post_syn_soma(neuron)
+
+    # client = CAVEclient('minnie65_public')
+    # for cell_id in failed_sk:
+    #     sk_dict = client.skeleton.get_skeleton(cell_id, output_format='json')
+    #     print(sk_dict)

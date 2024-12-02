@@ -1,5 +1,4 @@
 from enum import Enum
-# from typing import TypedDict
 
 from synapse import Synapse
 
@@ -7,13 +6,6 @@ DATA_BASE_PATH = 'data/'
 CONNECTOME_BASE_PATH = 'data/connectome_base.pkl'
 SKELETONS_DIR_PATH = 'data/skeletons'
 NEURONS_PATH = 'data/neurons'
-
-# NeuronsDict = dict[int, Neuron]
-#
-#
-# class ConnectomeDict(TypedDict):
-#     neurons: NeuronsDict
-#     synapses: list[Synapse]
 
 
 class SynapseDirection(str, Enum):
@@ -26,6 +18,7 @@ class ClfType(str, Enum):
     inhibitory = 'I'
 
 
+# morphological types
 m_types = ['DTC',
            'ITC',
            'L2a',

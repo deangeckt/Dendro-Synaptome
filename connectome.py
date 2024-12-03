@@ -17,6 +17,13 @@ class ConnectomeDict(TypedDict):
 
 
 class Connectome:
+    """
+    This Connectome represents a small partial part of the whole MICrONS Dataset, It contains
+    all neurons, but the synapses are those that each endpoint (i.e., the post/pre-synaptic neuron) belongs
+    to the dataset, in other words, synapses coming from (pre-synaptic) neurons outside the EM volume are excluded,
+    resulting in ~13M synapses instead of ~300M+.
+    """
+
     def __init__(self):
         with open(CONNECTOME_TOY_PATH, 'rb') as f:
             connectome_dict: ConnectomeDict = pickle.load(f)
@@ -43,26 +50,40 @@ class Connectome:
 
         return conn_matrix
 
-    def get_neuron_degree_distribution(self, cell_type: str, type_space: list[str], side: SynapseSide) -> dict:
+    def get_degree_distribution(self, side: SynapseSide) -> list[int]:
+        """
+        Get the full degree distribution of the connectome
+        i.e.: include synapses from outside the EM volume as well
+        :param side: SynapseSide (pre, post)
+        :return: a list of degrees
+        """
+        if side == SynapseSide.pre:
+            return [n.num_of_ds_pre_synapses for n in self.neurons.values()]
+        else:
+            return [n.num_of_ds_post_synapses for n in self.neurons.values()]
+
+    def get_cell_type_degree_distribution(self, cell_type: str, type_space: list[str], side: SynapseSide) -> dict:
         """
         :param cell_type: str: (mtype, cell_type, clf_type) which are attributes of neuron class
         :param type_space: list[str]: all possible types of cell_type
         :param side: SynapseSide (pre, post)
         :return: Distribution based on the cell_type of pre- / post-neurons (based on the side)
         """
-        data_dist = {type_: 0 for type_ in type_space}
+        degree_dist_per_type = {type_: [] for type_ in type_space}
+        neuron_side = 'num_of_ds_pre_synapses' if side == SynapseSide.pre else 'num_of_ds_post_synapses'
 
-        for syn in tqdm(self.synapses):
-            pre_syn_neuron_type = getattr(self.neurons[syn.pre_pt_root_id], cell_type)
-            post_syn_neuron_type = getattr(self.neurons[syn.post_pt_root_id], cell_type)
-            neuron_type = pre_syn_neuron_type if side == SynapseSide.pre else post_syn_neuron_type
-            data_dist[neuron_type] += 1
+        for n in tqdm(self.neurons.values()):
+            degree_dist_per_type[getattr(n, cell_type)].append(getattr(n, neuron_side))
 
-        return data_dist
+        return degree_dist_per_type
 
     def get_cell_type_synapse_attr(self, cell_type: str, type_space: list[str], side: SynapseSide,
                                    syn_attr: str) -> dict:
         """
+        get synapses attributes divided into cell type.
+        Notice - this includes synapses that both sides are within the EM volume!
+        # TODO: in another file, can calculate the same for the whole EM, just for outgoing (loop over neurons).
+
         :param cell_type: str: (mtype, cell_type, clf_type) which are attributes of neuron class
         :param type_space: list[str]: all possible types of cell_type
         :param side: SynapseSide (pre, post)
@@ -94,11 +115,10 @@ class Connectome:
 
 if __name__ == "__main__":
     connectome = Connectome()
-    print(connectome.get_neuron_degree_distribution('mtype', m_types, SynapseSide.post))
-    print(connectome.get_neuron_degree_distribution('mtype', m_types, SynapseSide.pre))
-
-    clf_type_space = [e for e in ClfType]
-    print(connectome.get_neuron_degree_distribution('clf_type', clf_type_space, SynapseSide.pre))
-    print(connectome.get_neuron_degree_distribution('clf_type', clf_type_space, SynapseSide.post))
-
-
+    print(connectome.get_cell_type_degree_distribution('mtype', m_types, SynapseSide.post))
+    # print(connectome.get_neuron_degree_distribution('mtype', m_types, SynapseSide.post))
+    # print(connectome.get_neuron_degree_distribution('mtype', m_types, SynapseSide.pre))
+    #
+    # clf_type_space = [e for e in ClfType]
+    # print(connectome.get_neuron_degree_distribution('clf_type', clf_type_space, SynapseSide.pre))
+    # print(connectome.get_neuron_degree_distribution('clf_type', clf_type_space, SynapseSide.post))

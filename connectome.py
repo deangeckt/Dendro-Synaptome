@@ -43,7 +43,7 @@ class Connectome:
 
         return conn_matrix
 
-    def get_cell_type_distribution(self, cell_type: str, type_space: list[str], side: SynapseSide) -> dict:
+    def get_neuron_degree_distribution(self, cell_type: str, type_space: list[str], side: SynapseSide) -> dict:
         """
         :param cell_type: str: (mtype, cell_type, clf_type) which are attributes of neuron class
         :param type_space: list[str]: all possible types of cell_type
@@ -94,11 +94,11 @@ class Connectome:
 
 if __name__ == "__main__":
     connectome = Connectome()
-    print(connectome.get_cell_type_distribution('mtype', m_types, SynapseSide.post))
-    print(connectome.get_cell_type_distribution('mtype', m_types, SynapseSide.pre))
+    print(connectome.get_neuron_degree_distribution('mtype', m_types, SynapseSide.post))
+    print(connectome.get_neuron_degree_distribution('mtype', m_types, SynapseSide.pre))
 
     clf_type_space = [e for e in ClfType]
-    print(connectome.get_cell_type_distribution('clf_type', clf_type_space, SynapseSide.pre))
-    print(connectome.get_cell_type_distribution('clf_type', clf_type_space, SynapseSide.post))
+    print(connectome.get_neuron_degree_distribution('clf_type', clf_type_space, SynapseSide.pre))
+    print(connectome.get_neuron_degree_distribution('clf_type', clf_type_space, SynapseSide.post))
 
 

@@ -109,12 +109,14 @@ def combine_neurons_dataset():
             if not pre_synapses and not post_synapses:
                 continue
 
+            neuron.ds_pre_syn_weight = np.mean(np.array([syn.size for syn in neuron.pre_synapses]))
             neuron.validate_neuron(pre_synapses=pre_synapses,
                                    num_post_syn=len(post_synapses),
                                    num_ds_pre=len(neuron.pre_synapses),
                                    num_ds_post=len(neuron.post_synapses))
 
             calculate_synapse_dist_to_post_syn_soma(neuron)
+
             neurons[neuron.root_id] = neuron
             synapses.extend(neuron.pre_synapses)
 
@@ -145,7 +147,7 @@ def create_toy_connectome():
 
 
 if __name__ == "__main__":
-    create_toy_connectome()
-    # combine_neurons_dataset()
+    # create_toy_connectome()
+    combine_neurons_dataset()
     # download_neuron_skeletons()
     # download_neurons_dataset()

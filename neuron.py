@@ -33,8 +33,11 @@ class Neuron:
         self.post_synapses = post_synapses
         self.pre_synapses = pre_synapses
         self.num_of_post_synapses = -1
-        self.num_of_ds_pre_synapses = -1
-        self.num_of_ds_post_synapses = -1
+
+        # ds refer to whole dataset, not just within the EM volume
+        self.ds_num_of_pre_synapses = -1
+        self.ds_num_of_post_synapses = -1
+        self.ds_pre_syn_weight = -1
 
     def __repr__(self):
         return (f"Neuron(root_id={self.root_id},"
@@ -69,9 +72,12 @@ class Neuron:
                         num_ds_post: int,
                         num_ds_pre: int
                         ):
+        """
+        No need to hold another copy of the post synapses
+        """
         self.pre_synapses = pre_synapses
         self.post_synapses = []
 
         self.num_of_post_synapses = num_post_syn
-        self.num_of_ds_post_synapses = num_ds_post
-        self.num_of_ds_pre_synapses = num_ds_pre
+        self.ds_num_of_post_synapses = num_ds_post
+        self.ds_num_of_pre_synapses = num_ds_pre

@@ -117,7 +117,7 @@ def combine_neurons_dataset():
                                    num_ds_post=len(neuron.post_synapses))
 
             calculate_synapse_dist_to_soma(neuron)
-            calculate_synapse_depth(neuron)
+            # calculate_synapse_depth(neuron)
 
             neurons[neuron.root_id] = neuron
             synapses.extend(neuron.pre_synapses)
@@ -149,7 +149,7 @@ def create_toy_connectome():
 
 
 if __name__ == "__main__":
-    # create_toy_connectome()
+    create_toy_connectome()
     combine_neurons_dataset()
     # download_neuron_skeletons()
     # download_neurons_dataset()

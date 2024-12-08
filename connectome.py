@@ -6,7 +6,8 @@ import pandas
 import pandas as pd
 from tqdm import tqdm
 
-from connectome_types import SynapseSide, cell_types, CONNECTOME_BASE_PATH, m_types, CONNECTOME_TOY_PATH, ClfType
+from connectome_types import SynapseSide, cell_types, CONNECTOME_BASE_PATH, m_types, CONNECTOME_TOY_PATH, ClfType, \
+    CONNECTOME_SYN_TABLE_PATH
 from neuron import Neuron
 from synapse import Synapse
 
@@ -27,7 +28,7 @@ class Connectome:
     """
 
     def __init__(self):
-        with open(CONNECTOME_TOY_PATH, 'rb') as f:
+        with open(CONNECTOME_BASE_PATH, 'rb') as f:
             connectome_dict: ConnectomeDict = pickle.load(f)
             self.neurons: NeuronsDict = connectome_dict['neurons']
             self.synapses: list[Synapse] = connectome_dict['synapses']
@@ -56,7 +57,11 @@ class Connectome:
         for syn in tqdm(self.synapses):
             syn_id.append(syn.id_)
             synapses_size.append(syn.size / 1000)
-            synapses_depth.append(syn.depth)
+
+            if not hasattr(syn, 'depth'):
+                synapses_depth.append(-1.0)
+            else:
+                synapses_depth.append(syn.depth)
 
             if not hasattr(syn, 'dist_to_post_syn_soma'):
                 synapses_dist_to_soma.append(-1.0)
@@ -127,4 +132,4 @@ class Connectome:
 
 if __name__ == "__main__":
     connectome = Connectome()
-    print(connectome.get_synapses_table())
+    # connectome.get_synapses_table().to_csv(CONNECTOME_SYN_TABLE_PATH)

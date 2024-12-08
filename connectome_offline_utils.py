@@ -27,9 +27,9 @@ def validate_neurons_files_and_skeletons():
                                                            '864691135515916499', '864691135527121243'}
 
 
-def calculate_synapse_dist_to_post_syn_soma(neuron: Neuron):
+def calculate_synapse_dist_to_soma(neuron: Neuron):
     """
-    calculated the distances of each of the neurons' synapses to its soma,
+    calculated the distances of each of the neurons' (pre) synapses to its soma,
     overriding the neuron pre_synapses list object
     :param neuron: a neuron object
     """
@@ -50,6 +50,38 @@ def calculate_synapse_dist_to_post_syn_soma(neuron: Neuron):
     except Exception as e:
         print(e)
         print(f'calc_syn_dist failed for neuron: {neuron.root_id}')
+
+
+def __get_synapse_depth(sk, syn_node):
+    syn_segment = sk.segment_map[syn_node]
+    parent_node = sk.segments_plus[syn_segment][-1]
+
+    depth = 0
+    while parent_node != int(sk.root):
+        depth += 1
+        parent_segment = sk.segment_map[parent_node]
+        parent_node = sk.segments_plus[parent_segment][-1]
+
+    return depth
+
+
+def calculate_synapse_depth(neuron: Neuron):
+    """
+    calculated the depth of each of the neurons' (pre) synapses, over the branching tree,
+    overriding the neuron pre_synapses list object
+    :param neuron: a neuron object
+    """
+    try:
+        sk = neuron.load_skeleton()
+        if sk is None:
+            return
+
+        for syn in neuron.pre_synapses:
+            _, syn_node = sk.kdtree.query(syn.center_position)
+            syn.depth = __get_synapse_depth(sk=sk, syn_node=syn_node)
+    except Exception as e:
+        print(e)
+        print(f'calculate_synapse_depth failed for neuron: {neuron.root_id}')
 
 
 if __name__ == "__main__":
@@ -124,7 +156,7 @@ if __name__ == "__main__":
     for n in list(failed_sk):
         with open(os.path.join(NEURONS_PATH, f'{n}.pkl'), 'rb') as f:
             neuron: Neuron = pickle.load(f)
-            calculate_synapse_dist_to_post_syn_soma(neuron)
+            calculate_synapse_depth(neuron)
 
     # client = CAVEclient('minnie65_public')
     # for cell_id in failed_sk:

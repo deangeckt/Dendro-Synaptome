@@ -40,6 +40,7 @@ class Connectome:
         synapses_size = []
         synapses_pos = []
         synapses_dist_to_soma = []
+        synapses_depth = []
         syn_id = []
 
         # pre-synaptic neuron data
@@ -55,6 +56,7 @@ class Connectome:
         for syn in tqdm(self.synapses):
             syn_id.append(syn.id_)
             synapses_size.append(syn.size / 1000)
+            synapses_depth.append(syn.depth)
 
             if not hasattr(syn, 'dist_to_post_syn_soma'):
                 synapses_dist_to_soma.append(-1.0)
@@ -73,10 +75,10 @@ class Connectome:
             post_mtype_type.append(post_syn_neuron.mtype)
 
         return pd.DataFrame({'id_': syn_id, 'dist_to_post_syn_soma': synapses_dist_to_soma, 'size': synapses_size,
-                             'center_position': synapses_pos, 'pre_clf_type': pre_clf_type,
-                             'pre_cell_type': pre_cell_type_type, 'pre_m_type': pre_mtype_type,
-                             'post_clf_type': post_clf_type, 'post_cell_type': post_cell_type,
-                             'post_mtype_type': post_mtype_type,
+                             'center_position': synapses_pos, 'depth': synapses_depth,
+                             'pre_clf_type': pre_clf_type, 'pre_cell_type': pre_cell_type_type,
+                             'pre_m_type': pre_mtype_type, 'post_clf_type': post_clf_type,
+                             'post_cell_type': post_cell_type, 'post_mtype_type': post_mtype_type,
                              })
 
     def get_cell_type_conn_matrix(self, cell_type: str, type_space: list[str]) -> np.ndarray:

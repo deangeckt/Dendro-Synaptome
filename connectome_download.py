@@ -7,7 +7,8 @@ from tqdm import tqdm
 import json
 
 from connectome import NeuronsDict, ConnectomeDict, Connectome
-from connectome_offline_utils import calculate_synapse_dist_to_post_syn_soma, validate_neurons_files_and_skeletons
+from connectome_offline_utils import calculate_synapse_dist_to_soma, validate_neurons_files_and_skeletons, \
+    calculate_synapse_depth
 from neuron import Neuron
 from synapse import Synapse
 from connectome_types import ClfType, CONNECTOME_BASE_PATH, SKELETONS_DIR_PATH, NEURONS_PATH, CONNECTOME_TOY_PATH
@@ -21,7 +22,7 @@ def syn_table_to_synapses(df: pd.DataFrame) -> list[Synapse]:
     sizes = df['size'].to_numpy()
     center_positions = df['ctr_pt_position'].apply(np.array).tolist()
     return [Synapse(id_=ids[i], pre_pt_root_id=pre_ids[i], post_pt_root_id=post_ids[i], size=sizes[i],
-                    center_position=center_positions[i], dist_to_post_syn_soma=-1.0) for i in range(len(df))
+                    center_position=center_positions[i]) for i in range(len(df))
             ]
 
 
@@ -115,7 +116,8 @@ def combine_neurons_dataset():
                                    num_ds_pre=len(neuron.pre_synapses),
                                    num_ds_post=len(neuron.post_synapses))
 
-            calculate_synapse_dist_to_post_syn_soma(neuron)
+            calculate_synapse_dist_to_soma(neuron)
+            calculate_synapse_depth(neuron)
 
             neurons[neuron.root_id] = neuron
             synapses.extend(neuron.pre_synapses)

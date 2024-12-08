@@ -7,8 +7,7 @@ class Synapse:
                  pre_pt_root_id: int,
                  post_pt_root_id: int,
                  size: int,  # TODO: add description
-                 center_position: np.ndarray,
-                 dist_to_post_syn_soma: float = -1.0
+                 center_position: np.ndarray
                  ):
 
         self.id_ = id_
@@ -16,7 +15,10 @@ class Synapse:
         self.post_pt_root_id = post_pt_root_id
         self.size = size
         self.center_position = center_position
-        self.dist_to_post_syn_soma = dist_to_post_syn_soma
+
+        # Post download attributes
+        self.dist_to_post_syn_soma = -1.0
+        self.depth = -1.0
 
     def __repr__(self):
         return (f"Synapse(id={self.id_},"
@@ -25,4 +27,5 @@ class Synapse:
                 f"size={self.size},"
                 f"center_position={self.center_position},"
                 f"dist_to_post_syn_soma={self.dist_to_post_syn_soma if hasattr(self, 'dist_to_post_syn_soma') else -1}"
+                f"depth={self.depth if hasattr(self, 'depth') else -1}"
                 )

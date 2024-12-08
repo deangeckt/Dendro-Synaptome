@@ -21,11 +21,11 @@ class Synapse:
         self.depth = -1.0
 
     def __repr__(self):
-        return (f"Synapse(id={self.id_},"
-                f"pre_pt_root_id={self.pre_pt_root_id},"
-                f"post_pt_root_id={self.post_pt_root_id},"
-                f"size={self.size},"
-                f"center_position={self.center_position},"
-                f"dist_to_post_syn_soma={self.dist_to_post_syn_soma if hasattr(self, 'dist_to_post_syn_soma') else -1}"
-                f"depth={self.depth if hasattr(self, 'depth') else -1}"
+        return (f"Synapse(id={self.id_}, "
+                f"pre_pt_root_id={self.pre_pt_root_id}, "
+                f"post_pt_root_id={self.post_pt_root_id}, "
+                f"size={self.size}, "
+                f"center_position={self.center_position}, "
+                f"dist_to_post_syn_soma={self.dist_to_post_syn_soma if hasattr(self, 'dist_to_post_syn_soma') else -1}, "
+                f"depth={self.depth if hasattr(self, 'depth') else -1} "
                 )

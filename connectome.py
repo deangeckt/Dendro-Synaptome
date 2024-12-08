@@ -26,16 +26,19 @@ class Connectome:
     to the dataset, in other words, synapses coming from (pre-synaptic) neurons outside the EM volume are excluded,
     resulting in ~13M synapses instead of ~300M+.
     """
+    def __init__(self, from_disk=True, neurons=None, synapses=None):
+        if from_disk:
+            with open(CONNECTOME_BASE_PATH, 'rb') as f:
+                connectome_dict: ConnectomeDict = pickle.load(f)
+                self.neurons: NeuronsDict = connectome_dict['neurons']
+                self.synapses: list[Synapse] = connectome_dict['synapses']
+        else:
+            self.neurons = neurons
+            self.synapses = synapses
 
-    def __init__(self):
-        with open(CONNECTOME_BASE_PATH, 'rb') as f:
-            connectome_dict: ConnectomeDict = pickle.load(f)
-            self.neurons: NeuronsDict = connectome_dict['neurons']
-            self.synapses: list[Synapse] = connectome_dict['synapses']
-
-            print('Connectome:')
-            print(f'\t#neurons: {len(self.neurons.keys())}')
-            print(f'\t#synapses: {len(self.synapses)}')
+        print('Connectome:')
+        print(f'\t#neurons: {len(self.neurons.keys())}')
+        print(f'\t#synapses: {len(self.synapses)}')
 
     def get_synapses_table(self) -> pandas.DataFrame:
         synapses_size = []
@@ -132,4 +135,3 @@ class Connectome:
 
 if __name__ == "__main__":
     connectome = Connectome()
-    # connectome.get_synapses_table().to_csv(CONNECTOME_SYN_TABLE_PATH)

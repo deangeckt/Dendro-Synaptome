@@ -11,7 +11,8 @@ from connectome_offline_utils import calculate_synapse_dist_to_soma, validate_ne
     calculate_synapse_depth
 from neuron import Neuron
 from synapse import Synapse
-from connectome_types import ClfType, CONNECTOME_BASE_PATH, SKELETONS_DIR_PATH, NEURONS_PATH, CONNECTOME_TOY_PATH
+from connectome_types import ClfType, CONNECTOME_BASE_PATH, SKELETONS_DIR_PATH, NEURONS_PATH, CONNECTOME_TOY_PATH, \
+    CONNECTOME_SYN_TABLE_PATH
 import random
 
 
@@ -89,6 +90,24 @@ def download_neuron_skeletons():
             print(e)
 
 
+def override_neurons_dataset_with_extra_attributes():
+    for filename in tqdm(os.listdir(NEURONS_PATH)):
+        neuron_file_path = os.path.join(NEURONS_PATH, filename)
+        with open(neuron_file_path, 'rb') as f:
+            neuron: Neuron = pickle.load(f)
+
+            if not neuron.pre_synapses:
+                continue
+            syn = neuron.pre_synapses[0]
+            if not hasattr(syn, 'dist_to_post_syn_soma'):
+                calculate_synapse_dist_to_soma(neuron)
+            if not hasattr(syn, 'depth'):
+                calculate_synapse_depth(neuron)
+
+        with open(neuron_file_path, 'wb') as f:
+            pickle.dump(neuron, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+
 def combine_neurons_dataset():
     validate_neurons_files_and_skeletons()
 
@@ -116,9 +135,6 @@ def combine_neurons_dataset():
                                    num_ds_pre=len(neuron.pre_synapses),
                                    num_ds_post=len(neuron.post_synapses))
 
-            calculate_synapse_dist_to_soma(neuron)
-            # calculate_synapse_depth(neuron)
-
             neurons[neuron.root_id] = neuron
             synapses.extend(neuron.pre_synapses)
 
@@ -130,6 +146,9 @@ def combine_neurons_dataset():
     connectome_dict: ConnectomeDict = {'neurons': neurons, 'synapses': synapses}
     with open(CONNECTOME_BASE_PATH, 'wb') as f:
         pickle.dump(connectome_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+    conn = Connectome(from_disk=False, neurons=neurons, synapses=synapses)
+    conn.get_synapses_table().to_csv(CONNECTOME_SYN_TABLE_PATH)
 
 
 def create_toy_connectome():
@@ -149,7 +168,8 @@ def create_toy_connectome():
 
 
 if __name__ == "__main__":
-    create_toy_connectome()
+    # create_toy_connectome()
+    override_neurons_dataset_with_extra_attributes()
     combine_neurons_dataset()
     # download_neuron_skeletons()
     # download_neurons_dataset()

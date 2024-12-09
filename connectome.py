@@ -26,9 +26,10 @@ class Connectome:
     to the dataset, in other words, synapses coming from (pre-synaptic) neurons outside the EM volume are excluded,
     resulting in ~13M synapses instead of ~300M+.
     """
+
     def __init__(self, from_disk=True, neurons=None, synapses=None):
         if from_disk:
-            with open(CONNECTOME_BASE_PATH, 'rb') as f:
+            with open(CONNECTOME_TOY_PATH, 'rb') as f:
                 connectome_dict: ConnectomeDict = pickle.load(f)
                 self.neurons: NeuronsDict = connectome_dict['neurons']
                 self.synapses: list[Synapse] = connectome_dict['synapses']
@@ -39,6 +40,41 @@ class Connectome:
         print('Connectome:')
         print(f'\t#neurons: {len(self.neurons.keys())}')
         print(f'\t#synapses: {len(self.synapses)}')
+
+    def get_neuron_table(self) -> pandas.DataFrame:
+        neurons = self.neurons.values()
+        root_id = [n.root_id for n in neurons]
+        volume = [n.volume for n in neurons]
+        clf_type = [n.clf_type for n in neurons]
+        cell_type = [n.cell_type for n in neurons]
+        mtype = [n.mtype for n in neurons]
+        pre_synapses = [len(n.pre_synapses) for n in neurons]
+        post_synapses = [n.num_of_post_synapses for n in neurons]
+
+        # Dynamic properties
+        pre_syn_weight = []
+        ex_pre_syn_weight = []
+        inh_pre_syn_weight = []
+        for neuron in neurons:
+            pre_syn_weight.append(np.mean(np.array([syn.size for syn in neuron.pre_synapses])))
+            ex_pre_syn_weight.append(np.mean(np.array([syn.size for syn in neuron.pre_synapses if self.neurons[
+                syn.pre_pt_root_id].clf_type == ClfType.excitatory])))
+            inh_pre_syn_weight.append(np.mean(np.array([syn.size for syn in neuron.pre_synapses if self.neurons[
+                syn.pre_pt_root_id].clf_type == ClfType.inhibitory])))
+
+        # for the whole dataset, not just the EM volume
+        ds_num_of_pre_synapses = [n.ds_num_of_pre_synapses for n in neurons]
+        ds_num_of_post_synapses = [n.ds_num_of_post_synapses for n in neurons]
+        ds_pre_syn_weight = [n.ds_pre_syn_weight for n in neurons]
+        return pd.DataFrame({'volume': volume, 'clf_type': clf_type, 'cell_type': cell_type, 'mtype': mtype,
+                             'pre_synapses': pre_synapses, 'post_synapses': post_synapses,
+                             'ds_num_of_post_synapses': ds_num_of_post_synapses,
+                             'ds_num_of_pre_synapses': ds_num_of_pre_synapses,
+                             'ds_pre_syn_weight': ds_pre_syn_weight, 'root_id': root_id,
+                             'pre_syn_weight': pre_syn_weight,
+                             'ex_pre_syn_weight': ex_pre_syn_weight,
+                             'inh_pre_syn_weight': inh_pre_syn_weight
+                             })
 
     def get_synapses_table(self) -> pandas.DataFrame:
         synapses_size = []
@@ -135,3 +171,5 @@ class Connectome:
 
 if __name__ == "__main__":
     connectome = Connectome()
+    # print(connectome.get_cell_type_conn_matrix('cell_type', cell_types))
+    print(connectome.get_neuron_table())

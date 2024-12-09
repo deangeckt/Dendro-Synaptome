@@ -12,7 +12,7 @@ from connectome_offline_utils import calculate_synapse_dist_to_soma, validate_ne
 from neuron import Neuron
 from synapse import Synapse
 from connectome_types import ClfType, CONNECTOME_BASE_PATH, SKELETONS_DIR_PATH, NEURONS_PATH, CONNECTOME_TOY_PATH, \
-    CONNECTOME_SYN_TABLE_PATH
+    CONNECTOME_SYN_TABLE_PATH, CONNECTOME_NEURON_TABLE_PATH
 import random
 
 
@@ -149,6 +149,7 @@ def combine_neurons_dataset():
 
     conn = Connectome(from_disk=False, neurons=neurons, synapses=synapses)
     conn.get_synapses_table().to_csv(CONNECTOME_SYN_TABLE_PATH)
+    conn.get_neuron_table().to_csv(CONNECTOME_NEURON_TABLE_PATH)
 
 
 def create_toy_connectome():

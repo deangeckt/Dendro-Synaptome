@@ -52,16 +52,19 @@ def calculate_synapse_dist_to_soma(neuron: Neuron):
         print(f'calc_syn_dist failed for neuron: {neuron.root_id}')
 
 
-def __get_synapse_depth(sk, syn_node):
-    syn_segment = sk.segment_map[syn_node]
+def __compute_depth(sk, node, depth_cache):
+    if node in depth_cache:
+        return depth_cache[node]
+
+    if node == int(sk.root):
+        depth_cache[node] = 0
+        return 0
+
+    syn_segment = sk.segment_map[node]
     parent_node = sk.segments_plus[syn_segment][-1]
 
-    depth = 0
-    while parent_node != int(sk.root):
-        depth += 1
-        parent_segment = sk.segment_map[parent_node]
-        parent_node = sk.segments_plus[parent_segment][-1]
-
+    depth = 1 + __compute_depth(sk, parent_node, depth_cache)
+    depth_cache[node] = depth
     return depth
 
 
@@ -76,9 +79,10 @@ def calculate_synapse_depth(neuron: Neuron):
         if sk is None:
             return
 
+        depth_cache = {}
         for syn in neuron.pre_synapses:
             _, syn_node = sk.kdtree.query(syn.center_position)
-            syn.depth = __get_synapse_depth(sk=sk, syn_node=syn_node)
+            syn.depth = __compute_depth(sk=sk, node=syn_node, depth_cache=depth_cache)
     except Exception as e:
         print(e)
         print(f'calculate_synapse_depth failed for neuron: {neuron.root_id}')

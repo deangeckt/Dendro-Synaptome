@@ -91,8 +91,8 @@ def download_neuron_skeletons():
 
 
 def override_neurons_em_dataset_attributes():
-    for filename in tqdm(os.listdir(NEURONS_PATH)):
-        neuron_file_path = os.path.join(NEURONS_PATH, filename)
+    for filename in tqdm(os.listdir(EM_NEURONS_PATH)):
+        neuron_file_path = os.path.join(EM_NEURONS_PATH, filename)
 
         with open(neuron_file_path, 'rb') as f:
             neuron: Neuron = pickle.load(f)

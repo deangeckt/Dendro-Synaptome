@@ -186,8 +186,11 @@ def create_toy_connectome():
 
 if __name__ == "__main__":
     # create_toy_connectome()
+
     # create_neurons_em_dataset()
+
     override_neurons_em_dataset_attributes()
     # combine_neurons_dataset()
+
     # download_neuron_skeletons()
     # download_neurons_dataset()

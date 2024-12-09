@@ -29,7 +29,7 @@ class Connectome:
 
     def __init__(self, from_disk=True, neurons=None, synapses=None):
         if from_disk:
-            with open(CONNECTOME_TOY_PATH, 'rb') as f:
+            with open(CONNECTOME_BASE_PATH, 'rb') as f:
                 connectome_dict: ConnectomeDict = pickle.load(f)
                 self.neurons: NeuronsDict = connectome_dict['neurons']
                 self.synapses: list[Synapse] = connectome_dict['synapses']
@@ -55,7 +55,7 @@ class Connectome:
         pre_syn_weight = []
         ex_pre_syn_weight = []
         inh_pre_syn_weight = []
-        for neuron in neurons:
+        for neuron in tqdm(neurons):
             pre_syn_weight.append(np.mean(np.array([syn.size for syn in neuron.pre_synapses])))
             ex_pre_syn_weight.append(np.mean(np.array([syn.size for syn in neuron.pre_synapses if self.neurons[
                 syn.pre_pt_root_id].clf_type == ClfType.excitatory])))
@@ -167,5 +167,3 @@ class Connectome:
 
 if __name__ == "__main__":
     connectome = Connectome()
-    # print(connectome.get_cell_type_conn_matrix('cell_type', cell_types))
-    print(connectome.get_neuron_table())

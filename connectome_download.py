@@ -12,11 +12,11 @@ from connectome_offline_utils import calculate_synapse_dist_to_soma, validate_ne
 from neuron import Neuron
 from synapse import Synapse
 from connectome_types import ClfType, CONNECTOME_BASE_PATH, SKELETONS_DIR_PATH, NEURONS_PATH, CONNECTOME_TOY_PATH, \
-    CONNECTOME_SYN_TABLE_PATH
+    CONNECTOME_SYN_TABLE_PATH, EM_NEURONS_PATH
 import random
 
 
-def syn_table_to_synapses(df: pd.DataFrame) -> list[Synapse]:
+def __syn_table_to_synapses(df: pd.DataFrame) -> list[Synapse]:
     ids = df['id'].to_numpy()
     pre_ids = df['pre_pt_root_id'].to_numpy()
     post_ids = df['post_pt_root_id'].to_numpy()
@@ -60,8 +60,8 @@ def download_neurons_dataset():
                             position=cell_types.loc[
                                 cell_id, ['pt_position_x', 'pt_position_y', 'pt_position_z']].to_numpy(),
                             volume=cell_types.at[cell_id, 'volume'],
-                            pre_synapses=syn_table_to_synapses(client.materialize.synapse_query(post_ids=cell_id)),
-                            post_synapses=syn_table_to_synapses(client.materialize.synapse_query(pre_ids=cell_id)),
+                            pre_synapses=__syn_table_to_synapses(client.materialize.synapse_query(post_ids=cell_id)),
+                            post_synapses=__syn_table_to_synapses(client.materialize.synapse_query(pre_ids=cell_id)),
                             )
             with open(neuron_file_path, 'wb') as f:
                 pickle.dump(neuron, f, protocol=pickle.HIGHEST_PROTOCOL)
@@ -90,30 +90,34 @@ def download_neuron_skeletons():
             print(e)
 
 
-def override_neurons_dataset_with_extra_attributes():
+def override_neurons_em_dataset_attributes():
     for filename in tqdm(os.listdir(NEURONS_PATH)):
         neuron_file_path = os.path.join(NEURONS_PATH, filename)
+
         with open(neuron_file_path, 'rb') as f:
             neuron: Neuron = pickle.load(f)
 
             if not neuron.pre_synapses:
                 continue
             syn = neuron.pre_synapses[0]
-            if not hasattr(syn, 'dist_to_post_syn_soma'):
+            if not hasattr(syn, 'dist_to_post_syn_soma') or syn.dist_to_post_syn_soma == -1.0:
                 calculate_synapse_dist_to_soma(neuron)
-            if not hasattr(syn, 'depth'):
+            if not hasattr(syn, 'depth') or syn.depth == -1.0:
+                print(filename)
                 calculate_synapse_depth(neuron)
 
-        with open(neuron_file_path, 'wb') as f:
+        with open(os.path.join(EM_NEURONS_PATH, filename), 'wb') as f:
             pickle.dump(neuron, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-def combine_neurons_dataset():
-    validate_neurons_files_and_skeletons()
-
+def create_neurons_em_dataset():
+    """
+    Save to EM_NEURONS_PATH all the neurons, left only with their pre-synapses
+    that connects two neurons from EM volume
+    :return:
+    """
+    os.makedirs(EM_NEURONS_PATH, exist_ok=True)
     neurons_ids = {int(f.split('.')[0]) for f in os.listdir(NEURONS_PATH)}
-    neurons: NeuronsDict = {}
-    synapses = []
     dataset_pre_synapses = 0
     dataset_post_synapses = 0
 
@@ -135,11 +139,23 @@ def combine_neurons_dataset():
                                    num_ds_pre=len(neuron.pre_synapses),
                                    num_ds_post=len(neuron.post_synapses))
 
-            neurons[neuron.root_id] = neuron
-            synapses.extend(neuron.pre_synapses)
+        with open(os.path.join(EM_NEURONS_PATH, filename), 'wb') as f:
+            pickle.dump(neuron, f, protocol=pickle.HIGHEST_PROTOCOL)
 
     print(f'#pre  synapses in the dataset: {dataset_pre_synapses}')
     print(f'#post synapses in the dataset: {dataset_post_synapses}')
+
+
+def combine_neurons_dataset():
+    validate_neurons_files_and_skeletons()
+    neurons: NeuronsDict = {}
+    synapses = []
+    for filename in tqdm(os.listdir(EM_NEURONS_PATH)):
+        with open(os.path.join(EM_NEURONS_PATH, filename), 'rb') as f:
+            neuron: Neuron = pickle.load(f)
+            neurons[neuron.root_id] = neuron
+            synapses.extend(neuron.pre_synapses)
+
     print(f'#synapses: {len(synapses)}')
     print(f'#neurons: {len(neurons.keys())}')
 
@@ -169,7 +185,8 @@ def create_toy_connectome():
 
 if __name__ == "__main__":
     # create_toy_connectome()
-    override_neurons_dataset_with_extra_attributes()
-    combine_neurons_dataset()
+    # create_neurons_em_dataset()
+    override_neurons_em_dataset_attributes()
+    # combine_neurons_dataset()
     # download_neuron_skeletons()
     # download_neurons_dataset()

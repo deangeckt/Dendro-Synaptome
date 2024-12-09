@@ -60,17 +60,13 @@ class Connectome:
         for syn in tqdm(self.synapses):
             syn_id.append(syn.id_)
             synapses_size.append(syn.size / 1000)
-
-            if not hasattr(syn, 'depth'):
-                synapses_depth.append(-1.0)
-            else:
-                synapses_depth.append(syn.depth)
-
-            if not hasattr(syn, 'dist_to_post_syn_soma'):
-                synapses_dist_to_soma.append(-1.0)
-            else:
-                synapses_dist_to_soma.append(syn.dist_to_post_syn_soma / 1000)
             synapses_pos.append(syn.center_position * np.array([4, 4, 40]))
+
+            syn_depth = syn.depth if hasattr(syn, 'depth') else -1.0
+            synapses_depth.append(syn_depth)
+
+            syn_dist_to_soma = syn.dist_to_post_syn_soma if hasattr(syn, 'dist_to_post_syn_soma') else -1.0
+            synapses_dist_to_soma.append(syn_dist_to_soma / 1000)
 
             pre_syn_neuron = self.neurons[syn.pre_pt_root_id]
             pre_clf_type.append(pre_syn_neuron.clf_type)

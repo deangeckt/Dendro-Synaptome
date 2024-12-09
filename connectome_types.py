@@ -6,6 +6,8 @@ CONNECTOME_SYN_TABLE_PATH = 'data/connectome_synapses.csv'
 CONNECTOME_TOY_PATH = 'data/connectome_toy.pkl'
 SKELETONS_DIR_PATH = 'data/skeletons'
 NEURONS_PATH = 'data/neurons'
+EM_NEURONS_PATH = 'data/em_neurons'
+
 
 
 class SynapseSide(str, Enum):

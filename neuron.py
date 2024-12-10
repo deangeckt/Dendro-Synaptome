@@ -21,7 +21,6 @@ class Neuron:
                  volume: float,
                  pre_synapses: list[Synapse],
                  post_synapses: list[Synapse]):
-
         self.root_id = root_id
         self.clf_type = clf_type
         self.cell_type = cell_type
@@ -30,8 +29,8 @@ class Neuron:
         self.volume = volume
 
         # invalidated after connectome loaded
-        self.post_synapses = post_synapses
-        self.pre_synapses = pre_synapses
+        self.post_synapses = post_synapses  # outgoing
+        self.pre_synapses = pre_synapses  # incoming
         self.num_of_post_synapses = -1
 
         # ds refer to whole dataset, not just within the EM volume

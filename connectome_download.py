@@ -103,7 +103,6 @@ def override_neurons_em_dataset_attributes():
             if not hasattr(syn, 'dist_to_post_syn_soma') or syn.dist_to_post_syn_soma == -1.0:
                 calculate_synapse_dist_to_soma(neuron)
             if not hasattr(syn, 'depth') or syn.depth == -1.0:
-                print(filename)
                 calculate_synapse_depth(neuron)
 
         with open(os.path.join(EM_NEURONS_PATH, filename), 'wb') as f:

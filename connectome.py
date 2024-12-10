@@ -28,7 +28,7 @@ class Connectome:
 
     def __init__(self, from_disk=True, neurons=None, synapses=None):
         if from_disk:
-            with open(CONNECTOME_BASE_PATH, 'rb') as f:
+            with open(CONNECTOME_TOY_PATH, 'rb') as f:
                 connectome_dict: ConnectomeDict = pickle.load(f)
                 self.neurons: NeuronsDict = connectome_dict['neurons']
                 self.synapses: list[Synapse] = connectome_dict['synapses']

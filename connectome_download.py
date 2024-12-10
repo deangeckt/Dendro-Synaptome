@@ -133,7 +133,12 @@ def create_neurons_em_dataset():
             if not pre_synapses and not post_synapses:
                 continue
 
-            neuron.ds_pre_syn_weight = np.mean(np.array([syn.size for syn in neuron.pre_synapses]))
+            neuron.ds_pre_syn_mean_weight = np.mean(np.array([syn.size for syn in neuron.pre_synapses]))
+            neuron.ds_post_syn_mean_weight = np.mean(np.array([syn.size for syn in neuron.post_synapses]))
+
+            neuron.ds_pre_syn_sum_weight = np.sum(np.array([syn.size for syn in neuron.pre_synapses]))
+            neuron.ds_post_syn_sum_weight = np.sum(np.array([syn.size for syn in neuron.post_synapses]))
+
             neuron.validate_neuron(pre_synapses=pre_synapses,
                                    num_post_syn=len(post_synapses),
                                    num_ds_pre=len(neuron.pre_synapses),

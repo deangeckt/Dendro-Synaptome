@@ -37,7 +37,12 @@ class Neuron:
         # ds refer to whole dataset, not just within the EM volume
         self.ds_num_of_pre_synapses = -1
         self.ds_num_of_post_synapses = -1
-        self.ds_pre_syn_weight = -1
+
+        self.ds_pre_syn_mean_weight = -1
+        self.ds_post_syn_mean_weight = -1
+
+        self.ds_pre_syn_sum_weight = -1
+        self.ds_post_syn_sum_weight = -1
 
     def __repr__(self):
         return (f"Neuron(root_id={self.root_id},"

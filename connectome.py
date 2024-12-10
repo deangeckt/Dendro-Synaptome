@@ -6,8 +6,7 @@ import pandas
 import pandas as pd
 from tqdm import tqdm
 
-from connectome_types import SynapseSide, cell_types, CONNECTOME_BASE_PATH, m_types, CONNECTOME_TOY_PATH, ClfType, \
-    CONNECTOME_SYN_TABLE_PATH
+from connectome_types import CONNECTOME_BASE_PATH, CONNECTOME_TOY_PATH, ClfType, CONNECTOME_SYN_TABLE_PATH
 from neuron import Neuron
 from synapse import Synapse
 
@@ -65,12 +64,20 @@ class Connectome:
         # for the whole dataset, not just the EM volume
         ds_num_of_pre_synapses = [n.ds_num_of_pre_synapses for n in neurons]
         ds_num_of_post_synapses = [n.ds_num_of_post_synapses for n in neurons]
-        ds_pre_syn_weight = [n.ds_pre_syn_weight for n in neurons]
-        return pd.DataFrame({'volume': volume, 'clf_type': clf_type, 'cell_type': cell_type, 'mtype': mtype,
-                             'pre_synapses': pre_synapses, 'post_synapses': post_synapses,
-                             'ds_num_of_post_synapses': ds_num_of_post_synapses,
+        ds_pre_syn_mean_weight = [n.ds_pre_syn_mean_weight for n in neurons]
+        ds_post_syn_mean_weight = [n.ds_post_syn_mean_weight for n in neurons]
+        ds_pre_syn_sum_weight = [n.ds_pre_syn_sum_weight for n in neurons]
+        ds_post_syn_sum_weight = [n.ds_post_syn_sum_weight for n in neurons]
+
+        return pd.DataFrame({'root_id': root_id, 'volume': volume, 'clf_type': clf_type, 'cell_type': cell_type,
+                             'mtype': mtype,
                              'ds_num_of_pre_synapses': ds_num_of_pre_synapses,
-                             'ds_pre_syn_weight': ds_pre_syn_weight, 'root_id': root_id,
+                             'ds_num_of_post_synapses': ds_num_of_post_synapses,
+                             'ds_pre_syn_mean_weight': ds_pre_syn_mean_weight,
+                             'ds_post_syn_mean_weight': ds_post_syn_mean_weight,
+                             'ds_pre_syn_sum_weight': ds_pre_syn_sum_weight,
+                             'ds_post_syn_sum_weight': ds_post_syn_sum_weight,
+                             'num_of_pre_synapses': pre_synapses, 'num_of_post_synapses': post_synapses,
                              'pre_syn_weight': pre_syn_weight,
                              'ex_pre_syn_weight': ex_pre_syn_weight,
                              'inh_pre_syn_weight': inh_pre_syn_weight
@@ -136,33 +143,6 @@ class Connectome:
             conn_matrix[type_index[pre_syn_neuron_type], type_index[post_syn_neuron_type]] += 1
 
         return conn_matrix
-
-    def get_degree_distribution(self, side: SynapseSide) -> list[int]:
-        """
-        Get the full degree distribution of the connectome
-        i.e.: include synapses from outside the EM volume as well
-        :param side: SynapseSide (pre, post)
-        :return: a list of degrees
-        """
-        if side == SynapseSide.pre:
-            return [n.ds_num_of_pre_synapses for n in self.neurons.values()]
-        else:
-            return [n.ds_num_of_post_synapses for n in self.neurons.values()]
-
-    def get_cell_type_degree_distribution(self, cell_type: str, type_space: list[str], side: SynapseSide) -> dict:
-        """
-        :param cell_type: str: (mtype, cell_type, clf_type) which are attributes of neuron class
-        :param type_space: list[str]: all possible types of cell_type
-        :param side: SynapseSide (pre, post)
-        :return: Distribution based on the cell_type of pre- / post-neurons (based on the side)
-        """
-        degree_dist_per_type = {type_: [] for type_ in type_space}
-        neuron_side = 'ds_num_of_pre_synapses' if side == SynapseSide.pre else 'ds_num_of_post_synapses'
-
-        for n in tqdm(self.neurons.values()):
-            degree_dist_per_type[getattr(n, cell_type)].append(getattr(n, neuron_side))
-
-        return degree_dist_per_type
 
 
 if __name__ == "__main__":

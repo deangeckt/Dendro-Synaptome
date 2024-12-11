@@ -28,7 +28,7 @@ class Connectome:
 
     def __init__(self, from_disk=True, neurons=None, synapses=None):
         if from_disk:
-            with open(CONNECTOME_TOY_PATH, 'rb') as f:
+            with open(CONNECTOME_BASE_PATH, 'rb') as f:
                 connectome_dict: ConnectomeDict = pickle.load(f)
                 self.neurons: NeuronsDict = connectome_dict['neurons']
                 self.synapses: list[Synapse] = connectome_dict['synapses']
@@ -132,17 +132,64 @@ class Connectome:
         """
         :param cell_type: str: (mtype, cell_type, clf_type) which are attributes of neuron class
         :param type_space: list[str]: all possible types of cell_type
-        :return: connectivity matrix of type cell_type
+        :return: connectivity matrix of type cell_type (sums)
         """
         conn_matrix = np.zeros((len(type_space), len(type_space)), dtype=int)
         type_index = {t: i for i, t in enumerate(type_space)}
-
         for syn in tqdm(self.synapses):
             pre_syn_neuron_type = getattr(self.neurons[syn.pre_pt_root_id], cell_type)
             post_syn_neuron_type = getattr(self.neurons[syn.post_pt_root_id], cell_type)
-            conn_matrix[type_index[pre_syn_neuron_type], type_index[post_syn_neuron_type]] += 1
-
+            conn_matrix[type_index[post_syn_neuron_type], type_index[pre_syn_neuron_type]] += 1
         return conn_matrix
+
+    def __get_neuron_counts(self, cell_type: str, type_space: list[str]) -> np.ndarray:
+        """
+        Count the number of neurons for each type in type_space.
+
+        :param cell_type: str: (mtype, cell_type, clf_type) which are attributes of neuron class
+        :param type_space: list[str]: all possible types of cell_type
+        :return: array of neuron counts for each type
+        """
+        counts = np.zeros(len(type_space), dtype=int)
+        type_index = {t: i for i, t in enumerate(type_space)}
+
+        for neuron in self.neurons.values():
+            neuron_type = getattr(neuron, cell_type)
+            counts[type_index[neuron_type]] += 1
+
+        return counts
+
+    def get_average_incoming_conn_matrix(self, cell_type: str, type_space: list[str]) -> np.ndarray:
+        """
+        Calculate the average incoming connectivity matrix.
+
+        :param cell_type: str: (mtype, cell_type, clf_type) which are attributes of neuron class
+        :param type_space: list[str]: all possible types of cell_type
+        :return: average incoming connectivity matrix
+        """
+        conn_matrix = self.get_cell_type_conn_matrix(cell_type, type_space)
+        neuron_counts = self.__get_neuron_counts(cell_type, type_space)
+
+        # Divide each column by the number of neurons of that type
+        avg_incoming_matrix = conn_matrix / neuron_counts[np.newaxis, :]
+
+        return avg_incoming_matrix
+
+    def get_average_outgoing_conn_matrix(self, cell_type: str, type_space: list[str]) -> np.ndarray:
+        """
+        Calculate the average outgoing connectivity matrix.
+
+        :param cell_type: str: (mtype, cell_type, clf_type) which are attributes of neuron class
+        :param type_space: list[str]: all possible types of cell_type
+        :return: average outgoing connectivity matrix
+        """
+        conn_matrix = self.get_cell_type_conn_matrix(cell_type, type_space)
+        neuron_counts = self.__get_neuron_counts(cell_type, type_space)
+
+        # Divide each row by the number of neurons of that type
+        avg_outgoing_matrix = conn_matrix / neuron_counts[:, np.newaxis]
+
+        return avg_outgoing_matrix
 
 
 if __name__ == "__main__":

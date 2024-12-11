@@ -6,8 +6,8 @@ class Synapse:
                  id_: int,
                  pre_pt_root_id: int,
                  post_pt_root_id: int,
-                 size: int,  # TODO: add description
-                 center_position: np.ndarray
+                 size: int,  # Size of the synaptic cleft in total voxel count. Generally proportional to surface area.
+                 center_position: np.ndarray # The x/y/z location of the synaptic cleft in nanometer coordinates
                  ):
 
         self.id_ = id_

@@ -18,6 +18,7 @@ class Synapse:
 
         # Post download attributes
         self.dist_to_post_syn_soma = -1.0
+        self.dist_to_pre_syn_soma = -1.0
         self.depth = -1.0
 
     def __repr__(self):
@@ -27,5 +28,6 @@ class Synapse:
                 f"size={self.size}, "
                 f"center_position={self.center_position}, "
                 f"dist_to_post_syn_soma={self.dist_to_post_syn_soma if hasattr(self, 'dist_to_post_syn_soma') else -1}, "
+                f"dist_to_pre_syn_soma={self.dist_to_pre_syn_soma if hasattr(self, 'dist_to_pre_syn_soma') else -1}, "
                 f"depth={self.depth if hasattr(self, 'depth') else -1} "
                 )

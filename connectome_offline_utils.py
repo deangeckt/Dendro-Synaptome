@@ -27,7 +27,7 @@ def validate_neurons_files_and_skeletons():
                                                            '864691135515916499', '864691135527121243'}
 
 
-def calculate_synapse_dist_to_soma(neuron: Neuron):
+def calculate_synapse_dist_to_post_syn_soma(neuron: Neuron):
     """
     calculated the distances of each of the neurons' (pre) synapses to its soma,
     overriding the neuron pre_synapses list object
@@ -45,6 +45,31 @@ def calculate_synapse_dist_to_soma(neuron: Neuron):
         syn_ds_to_nodes, syn_nodes = sk.kdtree.query(all_syn_xyz)
         distances_to_soma = [sk.distance_to_root[node] for node in syn_nodes]
         list(map(lambda syn, dist: setattr(syn, 'dist_to_post_syn_soma', dist),
+                 neuron.pre_synapses, distances_to_soma))
+
+    except Exception as e:
+        print(e)
+        print(f'calc_syn_dist failed for neuron: {neuron.root_id}')
+
+
+def calculate_synapse_dist_to_pre_syn_soma(neuron: Neuron):
+    """
+    calculated the distances of each of the neurons' (post) synapses to its soma,
+    overriding the neuron pre_synapses list object
+    :param neuron: a neuron object
+    """
+    try:
+        sk = neuron.load_skeleton()
+        if sk is None:
+            return
+
+        all_syn_xyz = [syn.center_position * np.array([4, 4, 40]) for syn in neuron.post_synapses]
+        if not all_syn_xyz:
+            return
+
+        syn_ds_to_nodes, syn_nodes = sk.kdtree.query(all_syn_xyz)
+        distances_to_soma = [sk.distance_to_root[node] for node in syn_nodes]
+        list(map(lambda syn, dist: setattr(syn, 'dist_to_pre_syn_soma', dist),
                  neuron.pre_synapses, distances_to_soma))
 
     except Exception as e:

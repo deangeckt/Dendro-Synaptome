@@ -28,10 +28,8 @@ class Neuron:
         self.position = position
         self.volume = volume
 
-        # invalidated after connectome loaded
         self.post_synapses = post_synapses  # outgoing
         self.pre_synapses = pre_synapses  # incoming
-        self.num_of_post_synapses = -1
 
         # ds refer to whole dataset, not just within the EM volume
         self.ds_num_of_pre_synapses = -1
@@ -69,19 +67,3 @@ class Neuron:
                 root=sk_dict['root'],
                 meta=sk_dict['meta'],
             )
-
-    def validate_neuron(self,
-                        pre_synapses: list[Synapse],
-                        num_post_syn: int,
-                        num_ds_post: int,
-                        num_ds_pre: int
-                        ):
-        """
-        No need to hold another copy of the post synapses
-        """
-        self.pre_synapses = pre_synapses
-        self.post_synapses = []
-
-        self.num_of_post_synapses = num_post_syn
-        self.ds_num_of_post_synapses = num_ds_post
-        self.ds_num_of_pre_synapses = num_ds_pre

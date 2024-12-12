@@ -1,10 +1,8 @@
 from enum import Enum
 
 DATA_BASE_PATH = 'data/'
-CONNECTOME_BASE_PATH = 'data/connectome_base.pkl'
 CONNECTOME_SYN_TABLE_PATH = 'data/connectome_synapses.csv'
 CONNECTOME_NEURON_TABLE_PATH = 'data/connectome_neurons.csv'
-CONNECTOME_TOY_PATH = 'data/connectome_toy.pkl'
 SKELETONS_DIR_PATH = 'data/skeletons'
 NEURONS_PATH = 'data/neurons'
 EM_NEURONS_PATH = 'data/em_neurons'

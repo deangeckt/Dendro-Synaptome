@@ -10,7 +10,8 @@ class ConnectomeNetwork:
     def __init__(self, connectome: Connectome):
         self.connectome = connectome
 
-        synapses_edges = [(s.pre_pt_root_id, s.post_pt_root_id) for s in connectome.synapses]
+
+        synapses_edges = list(zip(list(connectome.synapses.pre_id), list(connectome.synapses.post_id)))
         edges = [(src, tar, count) for (src, tar), count in Counter(synapses_edges).items()]
 
         self.graph = nx.DiGraph()

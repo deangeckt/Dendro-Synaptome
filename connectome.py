@@ -35,7 +35,6 @@ class Connectome:
         print(f'\t#synapses: {len(self.synapses)}')
         self.neuron_lookup = self.neurons.set_index('root_id').to_dict(orient='index')
 
-
     @staticmethod
     def get_neuron_table(neurons_dict: NeuronsDict) -> pandas.DataFrame:
         neurons = neurons_dict.values()
@@ -44,20 +43,42 @@ class Connectome:
         clf_type = [n.clf_type for n in neurons]
         cell_type = [n.cell_type for n in neurons]
         mtype = [n.mtype for n in neurons]
+
         pre_synapses = [len(n.pre_synapses) for n in neurons]
         post_synapses = [len(n.post_synapses) for n in neurons]
 
+        ex_pre_synapses = [len([syn for syn in n.pre_synapses if neurons_dict[
+            syn.pre_pt_root_id].clf_type == ClfType.excitatory]) for n in neurons]
+        inh_pre_synapses = [len([syn for syn in n.pre_synapses if neurons_dict[
+            syn.pre_pt_root_id].clf_type == ClfType.inhibitory]) for n in neurons]
+
         # Dynamic properties
-        pre_syn_weight = []
-        ex_pre_syn_weight = []
-        inh_pre_syn_weight = []
+        pre_syn_mean_weight = []
+        pre_syn_sum_weight = []
+
+        ex_pre_syn_mean_weight = []
+        ex_pre_syn_sum_weight = []
+
+        inh_pre_syn_mean_weight = []
+        inh_pre_syn_sum_weight = []
 
         for neuron in tqdm(neurons):
-            pre_syn_weight.append(np.mean(np.array([syn.size for syn in neuron.pre_synapses])))
-            ex_pre_syn_weight.append(np.mean(np.array([syn.size for syn in neuron.pre_synapses if neurons_dict[
-                syn.pre_pt_root_id].clf_type == ClfType.excitatory])))
-            inh_pre_syn_weight.append(np.mean(np.array([syn.size for syn in neuron.pre_synapses if neurons_dict[
-                syn.pre_pt_root_id].clf_type == ClfType.inhibitory])))
+            weights = np.array([syn.size for syn in neuron.pre_synapses])
+            mean_weights = np.mean(weights)
+            sum_weights = np.sum(weights)
+
+            pre_syn_mean_weight.append(mean_weights)
+            pre_syn_sum_weight.append(sum_weights)
+
+            ex_weights = np.array([syn.size for syn in neuron.pre_synapses if neurons_dict[
+                syn.pre_pt_root_id].clf_type == ClfType.excitatory])
+            ex_pre_syn_mean_weight.append(np.mean(ex_weights))
+            ex_pre_syn_sum_weight.append(np.sum(ex_weights))
+
+            inh_weights = np.array([syn.size for syn in neuron.pre_synapses if neurons_dict[
+                syn.pre_pt_root_id].clf_type == ClfType.inhibitory])
+            inh_pre_syn_mean_weight.append(np.mean(inh_weights))
+            inh_pre_syn_sum_weight.append(np.sum(inh_weights))
 
         # for the whole dataset, not just the EM volume
         ds_num_of_pre_synapses = [n.ds_num_of_pre_synapses for n in neurons]
@@ -76,9 +97,14 @@ class Connectome:
                              'ds_pre_syn_sum_weight': ds_pre_syn_sum_weight,
                              'ds_post_syn_sum_weight': ds_post_syn_sum_weight,
                              'num_of_pre_synapses': pre_synapses, 'num_of_post_synapses': post_synapses,
-                             'pre_syn_weight': pre_syn_weight,
-                             'ex_pre_syn_weight': ex_pre_syn_weight,
-                             'inh_pre_syn_weight': inh_pre_syn_weight
+                             'num_of_ex_pre_synapses': ex_pre_synapses,
+                             'num_of_inh_pre_synapses': inh_pre_synapses,
+                             'pre_syn_mean_weight': pre_syn_mean_weight,
+                             'pre_syn_sum_weight': pre_syn_sum_weight,
+                             'ex_pre_syn_mean_weight': ex_pre_syn_mean_weight,
+                             'ex_pre_syn_sum_weight': ex_pre_syn_sum_weight,
+                             'inh_pre_syn_mean_weight': inh_pre_syn_mean_weight,
+                             'inh_pre_syn_sum_weight': inh_pre_syn_sum_weight
                              })
 
     @staticmethod
@@ -105,7 +131,7 @@ class Connectome:
 
         for syn in tqdm(synapses):
             syn_id.append(syn.id_)
-            synapses_size.append(syn.size / 1000)
+            synapses_size.append(syn.size)
             synapses_pos.append(syn.center_position * np.array([4, 4, 40]))
 
             syn_depth = syn.depth if hasattr(syn, 'depth') else -1.0
@@ -158,7 +184,7 @@ class Connectome:
         return conn_matrix
 
     def get_cell_type_conn_matrix_of_syn_attr(self, cell_type: str, type_space: list[str],
-                                                 attr: str) -> np.ndarray:
+                                              attr: str) -> np.ndarray:
         """
         :param attr:  str: attribute of syn class to aggregate by
         :param cell_type: str: (mtype, cell_type, clf_type) which are attributes of neuron class

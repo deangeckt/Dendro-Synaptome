@@ -3,7 +3,6 @@ import pickle
 import numpy as np
 import pandas as pd
 from caveclient import CAVEclient
-from odbc import noError
 from tqdm import tqdm
 import json
 
@@ -14,7 +13,6 @@ from neuron import Neuron
 from synapse import Synapse
 from connectome_types import ClfType, SKELETONS_DIR_PATH, NEURONS_PATH, \
     EM_NEURONS_PATH, CONNECTOME_SYN_TABLE_PATH, CONNECTOME_NEURON_TABLE_PATH
-import random
 
 
 def __syn_table_to_synapses(df: pd.DataFrame) -> list[Synapse]:
@@ -168,23 +166,6 @@ def combine_neurons_dataset():
     conn = Connectome(neurons=neurons, synapses=synapses, from_disk=False)
     conn.synapses.to_csv(CONNECTOME_SYN_TABLE_PATH)
     conn.neurons.to_csv(CONNECTOME_NEURON_TABLE_PATH)
-
-
-def create_toy_connectome():
-    # TODO: fix
-    connectome = Connectome(from_disk=True)
-    toy_size = 1000
-
-    synapses: list[Synapse] = random.sample(connectome.synapses, toy_size)
-    neurons: NeuronsDict = {}
-
-    for syn in tqdm(synapses):
-        neurons[syn.post_pt_root_id] = connectome.neurons[syn.post_pt_root_id]
-        neurons[syn.pre_pt_root_id] = connectome.neurons[syn.pre_pt_root_id]
-
-    # connectome_dict: ConnectomeDict = {'neurons': neurons, 'synapses': synapses}
-    # with open(CONNECTOME_TOY_PATH, 'wb') as f:
-    #     pickle.dump(connectome_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == "__main__":

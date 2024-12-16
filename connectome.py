@@ -164,6 +164,20 @@ class Connectome:
                              'post_cell_type': post_cell_type, 'post_mtype_type': post_mtype_type,
                              })
 
+    def get_neuron_conn_matrix(self, type_: ClfType):
+        filtered_neurons_set = set(self.neurons[self.neurons.clf_type == type_].root_id)
+        filtered_neurons_list = list(self.neurons[self.neurons.clf_type == type_].root_id)
+
+        conn_matrix = np.zeros((len(filtered_neurons_list), len(filtered_neurons_list)), dtype=np.int64)
+        synapses = list(zip(list(self.synapses.pre_id), list(self.synapses.post_id)))
+
+        for pre_syn, post_syn in tqdm(synapses):
+            if pre_syn not in filtered_neurons_set or post_syn not in filtered_neurons_set:
+                continue
+            conn_matrix[filtered_neurons_list.index(post_syn), filtered_neurons_list.index(pre_syn)] += 1
+
+        return conn_matrix
+
     def get_cell_type_conn_matrix(self, cell_type: str, type_space: list[str]) -> np.ndarray:
         """
         :param cell_type: str: (mtype, cell_type, clf_type) which are attributes of neuron class

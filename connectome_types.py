@@ -8,7 +8,6 @@ NEURONS_PATH = 'data/neurons'
 EM_NEURONS_PATH = 'data/em_neurons'
 
 
-
 class SynapseSide(str, Enum):
     post = 'post'
     pre = 'pre'

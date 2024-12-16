@@ -221,3 +221,5 @@ class Connectome:
 
 if __name__ == "__main__":
     pass
+    con = Connectome(from_disk=True)
+    con.get_neuron_conn_matrix('I')

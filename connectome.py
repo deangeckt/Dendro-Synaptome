@@ -52,39 +52,44 @@ class Connectome:
         inh_pre_synapses = [len([syn for syn in n.pre_synapses if neurons_dict[
             syn.pre_pt_root_id].clf_type == ClfType.inhibitory]) for n in neurons]
 
-        # Dynamic properties
+        # Dynamic (incoming) properties
         pre_syn_mean_weight = []
         pre_syn_sum_weight = []
+        pre_syn_std_weight = []
 
         ex_pre_syn_mean_weight = []
         ex_pre_syn_sum_weight = []
+        ex_pre_syn_std_weight = []
 
         inh_pre_syn_mean_weight = []
         inh_pre_syn_sum_weight = []
+        inh_pre_syn_std_weight = []
 
         for neuron in tqdm(neurons):
             weights = np.array([syn.size for syn in neuron.pre_synapses])
-            mean_weights = np.mean(weights)
-            sum_weights = np.sum(weights)
-
-            pre_syn_mean_weight.append(mean_weights)
-            pre_syn_sum_weight.append(sum_weights)
+            pre_syn_mean_weight.append(np.mean(weights))
+            pre_syn_sum_weight.append(np.sum(weights))
+            pre_syn_std_weight.append(np.std(weights))
 
             ex_weights = np.array([syn.size for syn in neuron.pre_synapses if neurons_dict[
                 syn.pre_pt_root_id].clf_type == ClfType.excitatory])
             ex_pre_syn_mean_weight.append(np.mean(ex_weights))
             ex_pre_syn_sum_weight.append(np.sum(ex_weights))
+            ex_pre_syn_std_weight.append(np.std(ex_weights))
 
             inh_weights = np.array([syn.size for syn in neuron.pre_synapses if neurons_dict[
                 syn.pre_pt_root_id].clf_type == ClfType.inhibitory])
             inh_pre_syn_mean_weight.append(np.mean(inh_weights))
             inh_pre_syn_sum_weight.append(np.sum(inh_weights))
+            inh_pre_syn_std_weight.append(np.std(inh_weights))
 
         # for the whole dataset, not just the EM volume
         ds_num_of_pre_synapses = [n.ds_num_of_pre_synapses for n in neurons]
         ds_num_of_post_synapses = [n.ds_num_of_post_synapses for n in neurons]
         ds_pre_syn_mean_weight = [n.ds_pre_syn_mean_weight for n in neurons]
         ds_post_syn_mean_weight = [n.ds_post_syn_mean_weight for n in neurons]
+        ds_pre_syn_std_weight = [n.ds_pre_syn_std_weight for n in neurons]
+        ds_post_syn_std_weight = [n.ds_post_syn_std_weight for n in neurons]
         ds_pre_syn_sum_weight = [n.ds_pre_syn_sum_weight for n in neurons]
         ds_post_syn_sum_weight = [n.ds_post_syn_sum_weight for n in neurons]
 
@@ -96,15 +101,20 @@ class Connectome:
                              'ds_post_syn_mean_weight': ds_post_syn_mean_weight,
                              'ds_pre_syn_sum_weight': ds_pre_syn_sum_weight,
                              'ds_post_syn_sum_weight': ds_post_syn_sum_weight,
+                             'ds_pre_syn_std_weight': ds_pre_syn_std_weight,
+                             'ds_post_syn_std_weight': ds_post_syn_std_weight,
                              'num_of_pre_synapses': pre_synapses, 'num_of_post_synapses': post_synapses,
                              'num_of_ex_pre_synapses': ex_pre_synapses,
                              'num_of_inh_pre_synapses': inh_pre_synapses,
                              'pre_syn_mean_weight': pre_syn_mean_weight,
                              'pre_syn_sum_weight': pre_syn_sum_weight,
+                             'pre_syn_std_weight': pre_syn_std_weight,
                              'ex_pre_syn_mean_weight': ex_pre_syn_mean_weight,
                              'ex_pre_syn_sum_weight': ex_pre_syn_sum_weight,
+                             'ex_pre_syn_std_weight': ex_pre_syn_std_weight,
                              'inh_pre_syn_mean_weight': inh_pre_syn_mean_weight,
-                             'inh_pre_syn_sum_weight': inh_pre_syn_sum_weight
+                             'inh_pre_syn_sum_weight': inh_pre_syn_sum_weight,
+                             'inh_pre_syn_std_weight': inh_pre_syn_std_weight
                              })
 
     @staticmethod

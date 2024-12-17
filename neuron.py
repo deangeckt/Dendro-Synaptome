@@ -38,6 +38,9 @@ class Neuron:
         self.ds_pre_syn_mean_weight = -1
         self.ds_post_syn_mean_weight = -1
 
+        self.ds_pre_syn_std_weight = -1
+        self.ds_post_syn_std_weight = -1
+
         self.ds_pre_syn_sum_weight = -1
         self.ds_post_syn_sum_weight = -1
 

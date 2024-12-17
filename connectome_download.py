@@ -156,15 +156,23 @@ def override_neurons_em_dataset_attributes():
             pickle.dump(neuron, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-def combine_neurons_dataset():
-    validate_neurons_files_and_skeletons()
+def load_neurons_full_dict() -> NeuronsDict:
     neurons: NeuronsDict = {}
-    synapses: list[Synapse] = []
     for filename in tqdm(os.listdir(EM_NEURONS_PATH)):
         with open(os.path.join(EM_NEURONS_PATH, filename), 'rb') as f:
             neuron: Neuron = pickle.load(f)
             neurons[neuron.root_id] = neuron
-            synapses.extend(neuron.pre_synapses)
+
+    return neurons
+
+
+def combine_neurons_dataset():
+    validate_neurons_files_and_skeletons()
+    neurons: NeuronsDict = load_neurons_full_dict()
+
+    synapses: list[Synapse] = []
+    for n in tqdm(neurons.values()):
+        synapses.extend(n.pre_synapses)
 
     conn = Connectome(neurons=neurons, synapses=synapses, from_disk=False)
     conn.synapses.to_csv(CONNECTOME_SYN_TABLE_PATH)
@@ -172,8 +180,6 @@ def combine_neurons_dataset():
 
 
 if __name__ == "__main__":
-    # create_toy_connectome()
-
     # create_neurons_em_dataset()
 
     # override_neurons_em_dataset_attributes()

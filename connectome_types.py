@@ -16,6 +16,7 @@ class SynapseSide(str, Enum):
 class ClfType(str, Enum):
     excitatory = 'E'
     inhibitory = 'I'
+    both = 'both'
 
 
 # morphological types

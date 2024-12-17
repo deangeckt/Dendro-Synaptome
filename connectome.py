@@ -174,9 +174,13 @@ class Connectome:
                              'post_cell_type': post_cell_type, 'post_mtype_type': post_mtype_type,
                              })
 
-    def get_neuron_conn_matrix(self, type_: ClfType):
-        filtered_neurons_set = set(self.neurons[self.neurons.clf_type == type_].root_id)
-        filtered_neurons_list = list(self.neurons[self.neurons.clf_type == type_].root_id)
+    def get_neuron_conn_matrix(self, type_: ClfType) -> np.ndarray:
+        if type_ == ClfType.both:
+            filtered_neurons_set = set(self.neurons.root_id)
+            filtered_neurons_list = list(self.neurons.root_id)
+        else:
+            filtered_neurons_set = set(self.neurons[self.neurons.clf_type == type_].root_id)
+            filtered_neurons_list = list(self.neurons[self.neurons.clf_type == type_].root_id)
 
         conn_matrix = np.zeros((len(filtered_neurons_list), len(filtered_neurons_list)), dtype=np.int64)
         synapses = list(zip(list(self.synapses.pre_id), list(self.synapses.post_id)))
@@ -231,5 +235,3 @@ class Connectome:
 
 if __name__ == "__main__":
     pass
-    con = Connectome(from_disk=True)
-    con.get_neuron_conn_matrix('I')

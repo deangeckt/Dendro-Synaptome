@@ -27,10 +27,10 @@ def validate_neurons_files_and_skeletons():
                                                            '864691135515916499', '864691135527121243'}
 
 
-def calculate_synapse_dist_to_post_syn_soma(neuron: Neuron):
+def calculate_synapse_dist_to_soma(neuron: Neuron):
     """
-    calculated the distances of each of the neurons' (pre) synapses to its soma,
-    overriding the neuron pre_synapses list object
+    calculated the distances of each of the neurons' synapses to its soma,
+    overriding the neuron incoming (pre) / outgoing (post) synapses list object
     :param neuron: a neuron object
     """
     try:
@@ -38,39 +38,20 @@ def calculate_synapse_dist_to_post_syn_soma(neuron: Neuron):
         if sk is None:
             return
 
-        all_syn_xyz = [syn.center_position * np.array([4, 4, 40]) for syn in neuron.pre_synapses]
-        if not all_syn_xyz:
-            return
+        post_xyz = [syn.center_position * np.array([4, 4, 40]) for syn in neuron.post_synapses]
+        pre_xyz = [syn.center_position * np.array([4, 4, 40]) for syn in neuron.pre_synapses]
 
-        syn_ds_to_nodes, syn_nodes = sk.kdtree.query(all_syn_xyz)
-        distances_to_soma = [sk.distance_to_root[node] for node in syn_nodes]
-        list(map(lambda syn, dist: setattr(syn, 'dist_to_post_syn_soma', dist),
-                 neuron.pre_synapses, distances_to_soma))
+        if post_xyz:
+            _, syn_nodes = sk.kdtree.query(post_xyz)
+            distances_to_soma = [sk.distance_to_root[node] for node in syn_nodes]
+            list(map(lambda syn, dist: setattr(syn, 'dist_to_pre_syn_soma', dist),
+                     neuron.post_synapses, distances_to_soma))
 
-    except Exception as e:
-        print(e)
-        print(f'calc_syn_dist failed for neuron: {neuron.root_id}')
-
-
-def calculate_synapse_dist_to_pre_syn_soma(neuron: Neuron):
-    """
-    calculated the distances of each of the neurons' (post) synapses to its soma,
-    overriding the neuron pre_synapses list object
-    :param neuron: a neuron object
-    """
-    try:
-        sk = neuron.load_skeleton()
-        if sk is None:
-            return
-
-        all_syn_xyz = [syn.center_position * np.array([4, 4, 40]) for syn in neuron.post_synapses]
-        if not all_syn_xyz:
-            return
-
-        syn_ds_to_nodes, syn_nodes = sk.kdtree.query(all_syn_xyz)
-        distances_to_soma = [sk.distance_to_root[node] for node in syn_nodes]
-        list(map(lambda syn, dist: setattr(syn, 'dist_to_pre_syn_soma', dist),
-                 neuron.pre_synapses, distances_to_soma))
+        if pre_xyz:
+            _, syn_nodes = sk.kdtree.query(pre_xyz)
+            distances_to_soma = [sk.distance_to_root[node] for node in syn_nodes]
+            list(map(lambda syn, dist: setattr(syn, 'dist_to_post_syn_soma', dist),
+                     neuron.pre_synapses, distances_to_soma))
 
     except Exception as e:
         print(e)
@@ -105,9 +86,17 @@ def calculate_synapse_depth(neuron: Neuron):
             return
 
         depth_cache = {}
-        for syn in neuron.pre_synapses:
-            _, syn_node = sk.kdtree.query(syn.center_position)
-            syn.depth = __compute_depth(sk=sk, node=syn_node, depth_cache=depth_cache)
+
+        post_xyz = [syn.center_position * np.array([4, 4, 40]) for syn in neuron.post_synapses]
+        for pos, syn in zip(post_xyz,  neuron.post_synapses):
+            _, syn_node = sk.kdtree.query(pos)
+            syn.depth_in_pre_syn_tree = __compute_depth(sk=sk, node=syn_node, depth_cache=depth_cache)
+
+        pre_xyz = [syn.center_position * np.array([4, 4, 40]) for syn in neuron.pre_synapses]
+        for pos, syn in zip(pre_xyz, neuron.pre_synapses):
+            _, syn_node = sk.kdtree.query(pos)
+            syn.depth_in_post_syn_tree = __compute_depth(sk=sk, node=syn_node, depth_cache=depth_cache)
+
     except Exception as e:
         print(e)
         print(f'calculate_synapse_depth failed for neuron: {neuron.root_id}')

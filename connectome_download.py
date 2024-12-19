@@ -8,7 +8,7 @@ import json
 
 from connectome import NeuronsDict, Connectome
 from connectome_offline_utils import validate_neurons_files_and_skeletons, \
-    calculate_synapse_depth, calculate_synapse_dist_to_post_syn_soma, calculate_synapse_dist_to_pre_syn_soma
+    calculate_synapse_depth, calculate_synapse_dist_to_soma
 from neuron import Neuron
 from synapse import Synapse
 from connectome_types import ClfType, SKELETONS_DIR_PATH, NEURONS_PATH, \
@@ -112,17 +112,17 @@ def create_neurons_em_dataset():
             if not pre_synapses and not post_synapses:
                 continue
 
-            neuron.ds_pre_syn_mean_weight = np.mean(np.array([syn.size for syn in neuron.pre_synapses]))
-            neuron.ds_post_syn_mean_weight = np.mean(np.array([syn.size for syn in neuron.post_synapses]))
+            neuron.ds_incoming_syn_mean_weight = np.mean(np.array([syn.size for syn in neuron.pre_synapses]))
+            neuron.ds_outgoing_syn_mean_weight = np.mean(np.array([syn.size for syn in neuron.post_synapses]))
 
-            neuron.ds_pre_syn_std_weight = np.std(np.array([syn.size for syn in neuron.pre_synapses]))
-            neuron.ds_post_syn_std_weight = np.std(np.array([syn.size for syn in neuron.post_synapses]))
+            neuron.ds_incoming_syn_std_weight = np.std(np.array([syn.size for syn in neuron.pre_synapses]))
+            neuron.ds_outgoing_syn_std_weight = np.std(np.array([syn.size for syn in neuron.post_synapses]))
 
-            neuron.ds_pre_syn_sum_weight = np.sum(np.array([syn.size for syn in neuron.pre_synapses]))
-            neuron.ds_post_syn_sum_weight = np.sum(np.array([syn.size for syn in neuron.post_synapses]))
+            neuron.ds_incoming_syn_sum_weight = np.sum(np.array([syn.size for syn in neuron.pre_synapses]))
+            neuron.ds_outgoing_syn_sum_weight = np.sum(np.array([syn.size for syn in neuron.post_synapses]))
 
-            neuron.ds_num_of_post_synapses = len(neuron.post_synapses)
-            neuron.ds_num_of_pre_synapses = len(neuron.pre_synapses)
+            neuron.ds_num_of_outgoing_synapses = len(neuron.post_synapses)
+            neuron.ds_num_of_incoming_synapses = len(neuron.pre_synapses)
 
             # override with inter-synapses
             neuron.post_synapses = post_synapses
@@ -146,10 +146,8 @@ def override_neurons_em_dataset_attributes():
                 continue
             syn = neuron.pre_synapses[0]
             if not hasattr(syn, 'dist_to_post_syn_soma') or syn.dist_to_post_syn_soma == -1.0:
-                calculate_synapse_dist_to_post_syn_soma(neuron)
-            if not hasattr(syn, 'dist_to_pre_syn_soma') or syn.dist_to_pre_syn_soma == -1.0:
-                calculate_synapse_dist_to_pre_syn_soma(neuron)
-            if not hasattr(syn, 'depth') or syn.depth == -1.0:
+                calculate_synapse_dist_to_soma(neuron)
+            if not hasattr(syn, 'depth_in_post_syn_tree') or syn.depth_in_post_syn_tree == -1.0:
                 calculate_synapse_depth(neuron)
 
         with open(os.path.join(EM_NEURONS_PATH, filename), 'wb') as f:

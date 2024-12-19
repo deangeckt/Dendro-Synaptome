@@ -7,7 +7,7 @@ class Synapse:
                  pre_pt_root_id: int,
                  post_pt_root_id: int,
                  size: int,  # Size of the synaptic cleft in total voxel count. Generally proportional to surface area.
-                 center_position: np.ndarray # The x/y/z location of the synaptic cleft in nanometer coordinates
+                 center_position: np.ndarray  # The x/y/z location of the synaptic cleft in nanometer coordinates
                  ):
 
         self.id_ = id_
@@ -16,10 +16,11 @@ class Synapse:
         self.size = size
         self.center_position = center_position
 
-        # Post download attributes
+        # Post-download attributes
         self.dist_to_post_syn_soma = -1.0
         self.dist_to_pre_syn_soma = -1.0
-        self.depth = -1.0
+        self.depth_in_post_syn_tree = -1.0
+        self.depth_in_pre_syn_tree = -1.0
 
     def __repr__(self):
         return (f"Synapse(id={self.id_}, "
@@ -29,5 +30,6 @@ class Synapse:
                 f"center_position={self.center_position}, "
                 f"dist_to_post_syn_soma={self.dist_to_post_syn_soma if hasattr(self, 'dist_to_post_syn_soma') else -1}, "
                 f"dist_to_pre_syn_soma={self.dist_to_pre_syn_soma if hasattr(self, 'dist_to_pre_syn_soma') else -1}, "
-                f"depth={self.depth if hasattr(self, 'depth') else -1} "
+                f"depth_in_post_syn_tree={self.depth_in_post_syn_tree if hasattr(self, 'depth_in_post_syn_tree') else -1}, "
+                f"depth_in_pre_syn_tree={self.depth_in_pre_syn_tree if hasattr(self, 'depth_in_pre_syn_tree') else -1}, "
                 )

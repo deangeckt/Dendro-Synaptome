@@ -21,6 +21,7 @@ class Neuron:
                  volume: float,
                  pre_synapses: list[Synapse],
                  post_synapses: list[Synapse]):
+
         self.root_id = root_id
         self.clf_type = clf_type
         self.cell_type = cell_type
@@ -32,17 +33,17 @@ class Neuron:
         self.pre_synapses = pre_synapses  # incoming
 
         # ds refer to whole dataset, not just within the EM volume
-        self.ds_num_of_pre_synapses = -1
-        self.ds_num_of_post_synapses = -1
+        self.ds_num_of_incoming_synapses = -1
+        self.ds_num_of_outgoing_synapses = -1
 
-        self.ds_pre_syn_mean_weight = -1
-        self.ds_post_syn_mean_weight = -1
+        self.ds_incoming_syn_mean_weight = -1
+        self.ds_outgoing_syn_mean_weight = -1
 
-        self.ds_pre_syn_std_weight = -1
-        self.ds_post_syn_std_weight = -1
+        self.ds_incoming_syn_std_weight = -1
+        self.ds_outgoing_syn_std_weight = -1
 
-        self.ds_pre_syn_sum_weight = -1
-        self.ds_post_syn_sum_weight = -1
+        self.ds_incoming_syn_sum_weight = -1
+        self.ds_outgoing_syn_sum_weight = -1
 
     def __repr__(self):
         return (f"Neuron(root_id={self.root_id},"

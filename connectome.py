@@ -84,44 +84,46 @@ class Connectome:
             inh_pre_syn_std_weight.append(np.std(inh_weights))
 
         # for the whole dataset, not just the EM volume
-        ds_num_of_pre_synapses = [n.ds_num_of_pre_synapses for n in neurons]
-        ds_num_of_post_synapses = [n.ds_num_of_post_synapses for n in neurons]
-        ds_pre_syn_mean_weight = [n.ds_pre_syn_mean_weight for n in neurons]
-        ds_post_syn_mean_weight = [n.ds_post_syn_mean_weight for n in neurons]
-        ds_pre_syn_std_weight = [n.ds_pre_syn_std_weight for n in neurons]
-        ds_post_syn_std_weight = [n.ds_post_syn_std_weight for n in neurons]
-        ds_pre_syn_sum_weight = [n.ds_pre_syn_sum_weight for n in neurons]
-        ds_post_syn_sum_weight = [n.ds_post_syn_sum_weight for n in neurons]
+        ds_num_of_incoming_synapses = [n.ds_num_of_incoming_synapses for n in neurons]
+        ds_num_of_outgoing_synapses = [n.ds_num_of_outgoing_synapses for n in neurons]
+        ds_incoming_syn_mean_weight = [n.ds_incoming_syn_mean_weight for n in neurons]
+        ds_outgoing_syn_mean_weight = [n.ds_outgoing_syn_mean_weight for n in neurons]
+        ds_incoming_syn_std_weight = [n.ds_incoming_syn_std_weight for n in neurons]
+        ds_outgoing_syn_std_weight = [n.ds_outgoing_syn_std_weight for n in neurons]
+        ds_incoming_syn_sum_weight = [n.ds_incoming_syn_sum_weight for n in neurons]
+        ds_outgoing_syn_sum_weight = [n.ds_outgoing_syn_sum_weight for n in neurons]
 
         return pd.DataFrame({'root_id': root_id, 'volume': volume, 'clf_type': clf_type, 'cell_type': cell_type,
                              'mtype': mtype,
-                             'ds_num_of_pre_synapses': ds_num_of_pre_synapses,
-                             'ds_num_of_post_synapses': ds_num_of_post_synapses,
-                             'ds_pre_syn_mean_weight': ds_pre_syn_mean_weight,
-                             'ds_post_syn_mean_weight': ds_post_syn_mean_weight,
-                             'ds_pre_syn_sum_weight': ds_pre_syn_sum_weight,
-                             'ds_post_syn_sum_weight': ds_post_syn_sum_weight,
-                             'ds_pre_syn_std_weight': ds_pre_syn_std_weight,
-                             'ds_post_syn_std_weight': ds_post_syn_std_weight,
-                             'num_of_pre_synapses': pre_synapses, 'num_of_post_synapses': post_synapses,
-                             'num_of_ex_pre_synapses': ex_pre_synapses,
-                             'num_of_inh_pre_synapses': inh_pre_synapses,
-                             'pre_syn_mean_weight': pre_syn_mean_weight,
-                             'pre_syn_sum_weight': pre_syn_sum_weight,
-                             'pre_syn_std_weight': pre_syn_std_weight,
-                             'ex_pre_syn_mean_weight': ex_pre_syn_mean_weight,
-                             'ex_pre_syn_sum_weight': ex_pre_syn_sum_weight,
-                             'ex_pre_syn_std_weight': ex_pre_syn_std_weight,
-                             'inh_pre_syn_mean_weight': inh_pre_syn_mean_weight,
-                             'inh_pre_syn_sum_weight': inh_pre_syn_sum_weight,
-                             'inh_pre_syn_std_weight': inh_pre_syn_std_weight
+                             'ds_num_of_incoming_synapses': ds_num_of_incoming_synapses,
+                             'ds_num_of_outgoing_synapses': ds_num_of_outgoing_synapses,
+                             'ds_incoming_syn_mean_weight': ds_incoming_syn_mean_weight,
+                             'ds_outgoing_syn_mean_weight': ds_outgoing_syn_mean_weight,
+                             'ds_incoming_syn_sum_weight': ds_incoming_syn_sum_weight,
+                             'ds_outgoing_syn_sum_weight': ds_outgoing_syn_sum_weight,
+                             'ds_incoming_syn_std_weight': ds_incoming_syn_std_weight,
+                             'ds_outgoing_syn_std_weight': ds_outgoing_syn_std_weight,
+                             'num_of_incoming_synapses': pre_synapses,
+                             'num_of_outgoing_synapses': post_synapses,
+                             'num_of_ex_incoming_synapses': ex_pre_synapses,
+                             'num_of_inh_incoming_synapses': inh_pre_synapses,
+                             'incoming_syn_mean_weight': pre_syn_mean_weight,
+                             'incoming_syn_sum_weight': pre_syn_sum_weight,
+                             'incoming_syn_std_weight': pre_syn_std_weight,
+                             'ex_incoming_syn_mean_weight': ex_pre_syn_mean_weight,
+                             'ex_incoming_syn_sum_weight': ex_pre_syn_sum_weight,
+                             'ex_incoming_syn_std_weight': ex_pre_syn_std_weight,
+                             'inh_incoming_syn_mean_weight': inh_pre_syn_mean_weight,
+                             'inh_incoming_syn_sum_weight': inh_pre_syn_sum_weight,
+                             'inh_incoming_syn_std_weight': inh_pre_syn_std_weight
                              })
 
     @staticmethod
     def get_synapses_table(synapses: list[Synapse], neurons: NeuronsDict) -> pandas.DataFrame:
         synapses_size = []
         synapses_pos = []
-        synapses_depth = []
+        synapses_depth_in_post = []
+        synapses_depth_in_pre = []
         syn_id = []
 
         dist_to_post = []
@@ -144,12 +146,13 @@ class Connectome:
             synapses_size.append(syn.size)
             synapses_pos.append(syn.center_position * np.array([4, 4, 40]))
 
-            syn_depth = syn.depth if hasattr(syn, 'depth') else -1.0
-            synapses_depth.append(syn_depth)
+            depth_in_post_syn_tree = syn.depth_in_post_syn_tree if hasattr(syn, 'depth_in_post_syn_tree') else -1.0
+            depth_in_pre_syn_tree = syn.depth_in_pre_syn_tree if hasattr(syn, 'depth_in_pre_syn_tree') else -1.0
+            synapses_depth_in_post.append(depth_in_post_syn_tree)
+            synapses_depth_in_pre.append(depth_in_pre_syn_tree)
 
             dist_to_post_soma = syn.dist_to_post_syn_soma if hasattr(syn, 'dist_to_post_syn_soma') else -1.0
             dist_to_pre_soma = syn.dist_to_pre_syn_soma if hasattr(syn, 'dist_to_pre_syn_soma') else -1.0
-
             dist_to_post.append(dist_to_post_soma / 1000)
             dist_to_pre.append(dist_to_pre_soma / 1000)
 
@@ -167,8 +170,9 @@ class Connectome:
 
         return pd.DataFrame({'id_': syn_id, 'pre_id': pre_ids, 'post_id': post_ids,
                              'dist_to_post_syn_soma': dist_to_post, 'dist_to_pre_syn_soma': dist_to_pre,
-                             'size': synapses_size,
-                             'center_position': synapses_pos, 'depth': synapses_depth,
+                             'size': synapses_size, 'center_position': synapses_pos,
+                             'synapses_depth_in_post': synapses_depth_in_post,
+                             'synapses_depth_in_pre': synapses_depth_in_pre,
                              'pre_clf_type': pre_clf_type, 'pre_cell_type': pre_cell_type_type,
                              'pre_m_type': pre_mtype_type, 'post_clf_type': post_clf_type,
                              'post_cell_type': post_cell_type, 'post_mtype_type': post_mtype_type,

@@ -141,13 +141,11 @@ def override_neurons_em_dataset_attributes():
 
         with open(neuron_file_path, 'rb') as f:
             neuron: Neuron = pickle.load(f)
-
-            if not neuron.pre_synapses:
-                continue
-            syn = neuron.pre_synapses[0]
-            if not hasattr(syn, 'dist_to_post_syn_soma') or syn.dist_to_post_syn_soma == -1.0:
+            syn = neuron.pre_synapses[0] if neuron.pre_synapses else neuron.post_synapses[0]
+            if not hasattr(syn, 'dist_to_post_syn_soma') and not hasattr(syn, 'dist_to_pre_syn_soma'):
                 calculate_synapse_dist_to_soma(neuron)
-            if not hasattr(syn, 'depth_in_post_syn_tree') or syn.depth_in_post_syn_tree == -1.0:
+
+            if not hasattr(syn, 'depth_in_post_syn_tree') and not hasattr(syn, 'depth_in_pre_syn_tree'):
                 calculate_synapse_depth(neuron)
 
         with open(os.path.join(EM_NEURONS_PATH, filename), 'wb') as f:
@@ -180,7 +178,7 @@ def combine_neurons_dataset():
 if __name__ == "__main__":
     # create_neurons_em_dataset()
 
-    # override_neurons_em_dataset_attributes()
+    override_neurons_em_dataset_attributes()
     combine_neurons_dataset()
 
     # download_neuron_skeletons()

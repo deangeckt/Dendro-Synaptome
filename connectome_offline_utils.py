@@ -3,7 +3,7 @@ import pickle
 
 import numpy as np
 
-from connectome_types import NEURONS_PATH, SKELETONS_DIR_PATH
+from connectome_types import EM_NEURONS_PATH, SKELETONS_DIR_PATH
 from neuron import Neuron
 
 
@@ -11,7 +11,7 @@ def validate_neurons_files_and_skeletons():
     """
     Validate that the skeleton files are the same as the raw neuron files
     """
-    neuron_files = os.listdir(NEURONS_PATH)
+    neuron_files = os.listdir(EM_NEURONS_PATH)
     neuron_files = [n.split('.')[0] for n in neuron_files]
     neuron_files = set(neuron_files)
 
@@ -88,14 +88,14 @@ def calculate_synapse_depth(neuron: Neuron):
         depth_cache = {}
 
         post_xyz = [syn.center_position * np.array([4, 4, 40]) for syn in neuron.post_synapses]
-        for pos, syn in zip(post_xyz,  neuron.post_synapses):
-            _, syn_node = sk.kdtree.query(pos)
-            syn.depth_in_pre_syn_tree = __compute_depth(sk=sk, node=syn_node, depth_cache=depth_cache)
+        _, syn_nodes = sk.kdtree.query(post_xyz)
+        for node, syn in zip(post_xyz, neuron.post_synapses):
+            syn.depth_in_pre_syn_tree = __compute_depth(sk=sk, node=node, depth_cache=depth_cache)
 
         pre_xyz = [syn.center_position * np.array([4, 4, 40]) for syn in neuron.pre_synapses]
-        for pos, syn in zip(pre_xyz, neuron.pre_synapses):
-            _, syn_node = sk.kdtree.query(pos)
-            syn.depth_in_post_syn_tree = __compute_depth(sk=sk, node=syn_node, depth_cache=depth_cache)
+        _, syn_nodes = sk.kdtree.query(pre_xyz)
+        for node, syn in zip(syn_nodes, neuron.pre_synapses):
+            syn.depth_in_post_syn_tree = __compute_depth(sk=sk, node=node, depth_cache=depth_cache)
 
     except Exception as e:
         print(e)
@@ -172,7 +172,7 @@ if __name__ == "__main__":
                  864691136926770250}
     # unable to download (and load) the skeleton
     for n in list(failed_sk):
-        with open(os.path.join(NEURONS_PATH, f'{n}.pkl'), 'rb') as f:
+        with open(os.path.join(EM_NEURONS_PATH, f'{n}.pkl'), 'rb') as f:
             neuron: Neuron = pickle.load(f)
             calculate_synapse_depth(neuron)
 

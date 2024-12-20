@@ -43,8 +43,8 @@ def plot_cell_type_conn_matrix(z, labels, title, ax, remove=[], log_scale=True, 
     ax.set_xticklabels(labels_filtered, rotation=90)
     ax.set_yticks(np.arange(len(labels_filtered)))
     ax.set_yticklabels(labels_filtered)
-    ax.set_ylabel('Postsynaptic neuron type')
-    ax.set_xlabel('Presynaptic neuron type')
+    ax.set_ylabel('Post-synaptic neuron type')
+    ax.set_xlabel('Pre-synaptic neuron type')
 
     if text_inside:
         for i in range(z_filtered.shape[0]):
@@ -65,23 +65,26 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-pylustrator.start()
+# pylustrator.start()
 
 clf_type_space = [e.value for e in ClfType]
 
 neurons_df = pd.read_csv(CONNECTOME_NEURON_TABLE_PATH)
 neurons_df_sorted = neurons_df.sort_values('cell_type')
-ex_color = "#FF0000"
+ex_color = "#ff0000"
 inh_color = "#0072BD"
+
+ei_palette = {"I": inh_color, "E": ex_color}
+ei_combine_palette = {"I": inh_color, "E": ex_color, "All": "lightgray"}
 
 # cell types colors
 cell_types = sorted(neurons_df['cell_type'].unique())
 combine_cell_type_order = cell_types.copy()
 combine_cell_type_order += ['E', 'I', 'All']
 
-data_cols = ['ds_num_of_pre_synapses', 'ds_num_of_post_synapses',
-             'ds_pre_syn_mean_weight', 'ds_post_syn_mean_weight',
-             'ds_pre_syn_sum_weight', 'ds_post_syn_sum_weight'
+data_cols = ['ds_num_of_incoming_synapses', 'ds_num_of_outgoing_synapses',
+             'ds_incoming_syn_mean_weight', 'ds_outgoing_syn_mean_weight',
+             'ds_incoming_syn_sum_weight', 'ds_outgoing_syn_sum_weight'
              ]
 
 all_type_df = neurons_df[data_cols].copy()
@@ -123,7 +126,7 @@ celltype_mat_size_avg = fig1_data['avg_weight_mat']
 
 # Plot 0
 h = sns.histplot(data=neurons_df_sorted, x="cell_type", hue="clf_type",
-                 palette={"I": inh_color, "E": ex_color}, alpha=1, ax=ax0, multiple="stack")
+                 palette=ei_palette, alpha=1, ax=ax0, multiple="stack")
 for container in h.containers:
     h.bar_label(container, labels=[''] * len(container))
 for container in h.containers:
@@ -136,27 +139,27 @@ ax0.set_title("Neuron type distribution (total: 63904 E, 7832 I)")
 sns.move_legend(ax0, title='Type', loc='best')
 
 ## ROW 1
-sns.boxplot(y="type_", x="ds_num_of_pre_synapses", hue="clf_type", data=combined_df,
-            palette={"I": inh_color, "E": ex_color, "All": "lightgray"}, showfliers=False, ax=ax1)
+sns.boxplot(y="type_", x="ds_num_of_incoming_synapses", hue="clf_type", data=combined_df,
+            palette=ei_combine_palette, showfliers=False, ax=ax1)
 ax1.set_title("In degree distribution")
 ax1.set_xlabel("Number of connections")
 ax1.legend(title="Type")
 
-sns.boxplot(y="type_", x="ds_num_of_post_synapses", hue="clf_type", data=combined_df,
-            palette={"I": inh_color, "E": ex_color, "All": "lightgray"}, showfliers=False, ax=ax2)
+sns.boxplot(y="type_", x="ds_num_of_outgoing_synapses", hue="clf_type", data=combined_df,
+            palette=ei_combine_palette, showfliers=False, ax=ax2)
 ax2.set_title("Out degree distribution")
 ax2.set_xlabel("Number of connections")
 
 plot_cell_type_conn_matrix(celltype_mat, cell_types_orig, 'Total number of connections', ax=ax3, log_scale=True)
 
 ## ROW 2
-sns.boxplot(y="type_", x="ds_pre_syn_sum_weight", hue="clf_type", data=combined_df,
-            palette={"I": inh_color, "E": ex_color, "All": "lightgray"}, showfliers=False, ax=ax4)
+sns.boxplot(y="type_", x="ds_incoming_syn_sum_weight", hue="clf_type", data=combined_df,
+            palette=ei_combine_palette, showfliers=False, ax=ax4)
 ax4.set_title("Incoming sum synaptic cleft size")
 ax4.set_xlabel("Sum of synaptic cleft size (voxels)")
 
-sns.boxplot(y="type_", x="ds_post_syn_sum_weight", hue="clf_type", data=combined_df,
-            palette={"I": inh_color, "E": ex_color, "All": "lightgray"}, showfliers=False, ax=ax5)
+sns.boxplot(y="type_", x="ds_outgoing_syn_sum_weight", hue="clf_type", data=combined_df,
+            palette=ei_combine_palette, showfliers=False, ax=ax5)
 ax5.set_title("Outgoing sum synaptic cleft size")
 ax5.set_xlabel("Sum of synaptic cleft size (voxels)")
 
@@ -164,13 +167,13 @@ plot_cell_type_conn_matrix(celltype_mat_size, cell_types_orig, 'Total sum of wei
 
 ## ROW 3
 
-sns.boxplot(y="type_", x="ds_pre_syn_mean_weight", hue="clf_type", data=combined_df,
-            palette={"I": inh_color, "E": ex_color, "All": "lightgray"}, showfliers=False, ax=ax7)
+sns.boxplot(y="type_", x="ds_incoming_syn_mean_weight", hue="clf_type", data=combined_df,
+            palette=ei_combine_palette, showfliers=False, ax=ax7)
 ax7.set_title("Incoming mean synaptic cleft size")
 ax7.set_xlabel("Mean synaptic cleft size (voxels)")
 
-sns.boxplot(y="type_", x="ds_post_syn_mean_weight", hue="clf_type", data=combined_df,
-            palette={"I": inh_color, "E": ex_color, "All": "lightgray"}, showfliers=False, ax=ax8)
+sns.boxplot(y="type_", x="ds_outgoing_syn_mean_weight", hue="clf_type", data=combined_df,
+            palette=ei_combine_palette, showfliers=False, ax=ax8)
 ax8.set_title("Outgoing mean synaptic cleft size")
 ax8.set_xlabel("Mean synaptic cleft size (voxels)")
 
@@ -179,12 +182,11 @@ plot_cell_type_conn_matrix(celltype_mat_size_avg, cell_types, 'Mean weights', ax
 
 #% start: automatic generated code from pylustrator
 plt.figure(1).ax_dict = {ax.get_label(): ax for ax in plt.figure(1).axes}
-import matplotlib as mpl
 getattr(plt.figure(1), '_pylustrator_init', lambda: ...)()
 plt.figure(1).set_size_inches(34.990000/2.54, 33.490000/2.54, forward=True)
-plt.figure(1).ax_dict["<colorbar>"].set_position([0.893071, 0.538939, 0.007941, 0.162330])
-plt.figure(1).ax_dict["<colorbar>"].set_position([0.893071, 0.311676, 0.007941, 0.162330])
-plt.figure(1).ax_dict["<colorbar>"].set_position([0.893071, 0.084414, 0.007941, 0.162330])
+# plt.figure(1).ax_dict["<colorbar>"].set_position([0.893071, 0.538939, 0.007941, 0.162330])
+# plt.figure(1).ax_dict["<colorbar>"].set_position([0.893071, 0.311676, 0.007941, 0.162330])
+# plt.figure(1).ax_dict["<colorbar>"].set_position([0.893071, 0.084414, 0.007941, 0.162330])
 plt.figure(1).axes[0].set(position=[0.2161, 0.7319, 0.6577, 0.1481])
 plt.figure(1).axes[0].set_position([0.196182, 0.766201, 0.705467, 0.162330])
 plt.figure(1).axes[0].get_legend().set(visible=False)
